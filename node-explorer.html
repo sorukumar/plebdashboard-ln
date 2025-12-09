@@ -11,8 +11,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <!-- Local styles -->
     <link rel="stylesheet" href="styles/main.css">
-    <link rel="stylesheet" href="styles/trending.css">
     <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/node-explorer.css">
 </head>
 <body>
     <!-- Bitcoin Data Labs Header -->
@@ -87,7 +87,7 @@
                             <option value="birth_tx:desc">Sort by Newest Node</option>
                         </select>
 
-                        <select id="nodeTypeFilter" class="filter-select">
+                        <select id="nodeTypeFilter" class="filter-select" disabled title="Node type filtering coming soon">
                             <option value="all">All Node Types</option>
                             <option value="routing">Routing Nodes</option>
                             <option value="mobile">Mobile Nodes</option>
@@ -105,19 +105,20 @@
                 <div class="filter-presets-row">
                     <div class="filter-presets">
                         <span class="presets-label">Quick Filters:</span>
-                        <button class="filter-preset" data-preset="top_routing_nodes">
+                        <span class="coming-soon-note">(Coming soon)</span>
+                        <button class="filter-preset" data-preset="top_routing_nodes" disabled>
                             <i class="fas fa-route"></i> Top Routing Nodes
                         </button>
-                        <button class="filter-preset" data-preset="emerging_nodes">
+                        <button class="filter-preset" data-preset="emerging_nodes" disabled>
                             <i class="fas fa-seedling"></i> Emerging Nodes
                         </button>
-                        <button class="filter-preset" data-preset="high_capacity">
+                        <button class="filter-preset" data-preset="high_capacity" disabled>
                             <i class="fas fa-coins"></i> High Capacity
                         </button>
-                        <button class="filter-preset" data-preset="well_connected">
+                        <button class="filter-preset" data-preset="well_connected" disabled>
                             <i class="fas fa-network-wired"></i> Well Connected
                         </button>
-                        <button class="filter-preset" data-preset="low_fees">
+                        <button class="filter-preset" data-preset="low_fees" disabled>
                             <i class="fas fa-percentage"></i> Low Fees
                         </button>
                     </div>
@@ -281,6 +282,6 @@
     </script>
     
     <!-- Node Explorer functionality -->
-    <script type="module" src="scripts/trending.js"></script>
+    <script type="module" src="scripts/node-explorer.js"></script>
 </body>
 </html>

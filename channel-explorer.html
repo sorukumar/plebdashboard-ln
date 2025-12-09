@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plebdashboard – Channel Explorer</title>
+    
+    <!-- Bitcoin Data Labs styles -->
+    <link rel="stylesheet" href="https://sorukumar.github.io/Bitcoin-Data-Labs/styles/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Local styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/node-explorer.css">
+</head>
+<body>
+    <!-- Bitcoin Data Labs Header -->
+    <div id="header"></div>
+    
+    <div class="main-content">
+        <div class="explorer-container">
+            <!-- Breadcrumb Navigation -->
+            <div class="breadcrumb-container">
+                <div class="breadcrumb">
+                    <a href="index.html"><i class="fas fa-home"></i> Home</a>
+                    <span class="breadcrumb-separator">/</span>
+                    <span class="breadcrumb-current">Channel Explorer</span>
+                </div>
+            </div>
+            <!-- Page Header -->
+            <div class="page-header">
+                <div class="page-header-content">
+                    <div class="page-title-section">
+                        <h1><i class="fas fa-link"></i> Channel Explorer</h1>
+                        <p>Explore and discover Lightning Network channels with filtering and sorting capabilities</p>
+                    </div>
+                    <div class="page-actions">
+                        <div class="nav-btn-group">
+                            <a href="node-explorer.html" class="nav-btn">
+                                <i class="fas fa-compass"></i>
+                                Node Explorer
+                            </a>
+                            <a href="index.html" class="nav-btn">
+                                <i class="fas fa-home"></i>
+                                Home
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Channel Explorer Controls -->
+            <div class="explorer-controls">
+                <div class="controls-row">
+                    <!-- Search Filters -->
+                    <div class="search-container">
+                        <input type="text" id="node1SearchInput" placeholder="Filter by Node 1 alias or pubkey..." class="search-input">
+                        <input type="text" id="node2SearchInput" placeholder="Filter by Node 2 alias or pubkey..." class="search-input">
+                        <i class="fas fa-search search-icon"></i>
+                    </div>
+
+                    <!-- View Toggle -->
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid" title="Grid View">
+                            <i class="fas fa-th-large"></i>
+                        </button>
+                        <button class="view-btn" data-view="list" title="List View">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="controls-row">
+                    <!-- Basic Filters -->
+                    <div class="filter-group">
+                        <select id="sortBy" class="filter-select">
+                            <option value="capacity:desc">Capacity: High to Low</option>
+                            <option value="capacity:asc">Capacity: Low to High</option>
+                            <option value="birth_tx:asc">Birth TX: Oldest First</option>
+                            <option value="birth_tx:desc">Birth TX: Newest First</option>
+                        </select>
+
+                        <button id="resetFilters" class="reset-btn">
+                            <i class="fas fa-undo"></i> Reset All
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter Statistics -->
+                <div class="filter-stats">
+                    <div id="filterStats">Loading...</div>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="loading-content">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading channel data...</p>
+                </div>
+            </div>
+
+            <!-- Channel Explorer Container -->
+            <div id="channelExplorerContainer" class="node-explorer-container grid-view" style="display: none;">
+                <div id="channelExplorerGrid" class="node-explorer-grid">
+                    <!-- Channels will be populated here -->
+                </div>
+            </div>
+
+            <!-- Pagination -->
+            <div id="paginationContainer" class="pagination-container container" style="display: none;">
+                <div class="pagination-info">
+                    <span id="paginationText">Showing 1-20 of 0 channels</span>
+                </div>
+                <div class="pagination-controls">
+                    <button id="prevPage" class="pagination-btn" disabled>
+                        <i class="fas fa-chevron-left"></i>
+                        Previous
+                    </button>
+                    <div id="pageNumbers" class="page-numbers">
+                        <!-- Page numbers will be populated here -->
+                    </div>
+                    <button id="nextPage" class="pagination-btn">
+                        Next
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bitcoin Data Labs Footer -->
+    <div id="footer"></div>
+
+    <!-- Bitcoin Data Labs App Components -->
+    <script src="https://sorukumar.github.io/Bitcoin-Data-Labs/components/app-components.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            BitcoinLabsAppComponents.init({
+                isApp: true,
+                appName: "plebdashboard-ln",
+                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/"
+            });
+        });
+    </script>
+    
+    <!-- Channel Explorer functionality -->
+    <script type="module" src="scripts/channel-explorer.js"></script>
+</body>
+</html>

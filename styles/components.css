@@ -250,13 +250,13 @@ td, th:not(.sortable),
     transition: border-color 0.2s ease;
 }
 
-/* Override any conflicting left-positioned icons from trending.css */
+/* Remove any padding-left that might be set by node-explorer.css */
 .search-container .search-icon {
     left: auto !important;
     right: 1rem !important;
 }
 
-/* Remove any padding-left that might be set by trending.css */
+/* Remove any padding-left that might be set by node-explorer.css */
 .search-container .search-input {
     padding-left: 1rem !important;
 }
@@ -281,7 +281,7 @@ td, th:not(.sortable),
 }
 
 .pagination-container.container {
-    /* Override for trending page */
+    /* Override for node-explorer page */
     width: var(--container-width, 90%);
     max-width: var(--max-content-width, 1200px);
 }
