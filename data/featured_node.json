@@ -8,8 +8,8 @@
     "comment": "The node that powers Plebdashboard. Maintained for research and community service"
   },
   {
-    "pub_key": "02ad6fb8d693dc1e4569bcedefadf5f72a931ae027dc0f0c544b34c1c6f3b9a02b",
-    "comment": "Emerging node with strategic channel placement and growing network presence"
+    "pub_key": "0391904d140fdf88d19423513945a5fcc49c606521b65a85f6d6fe46ebdd1c7665",
+    "comment": "Emerging node with strategic channel placement and growing network presence."
   },
   {
     "pub_key": "03037dc08e9ac63b82581f79b662a4d0ceca8a8ca162b1af3551595b8f2d97b70a",
@@ -20,11 +20,15 @@
     "comment": "Community-focused node supporting Lightning Network adoption"
   },
   {
-    "pub_key": "03c2abfa93eacec04721c019644584424aab2ba4dff3ac9bdab4e9c97007491dda",
-    "comment": "Innovation-driven node experimenting with new Lightning features"
+    "pub_key": "03a1f3afd646d77bdaf545cceaf079bab6057eae52c6319b63b5803d0989d6a72f",
+    "comment": "One of the biggest crypto exchange that adopted Lightning"
   },
   {
     "pub_key": "03434a39cd9a537c852fc8fb72454086d726f9111e9f730cef4985c39c11fae944",
     "comment": "One of the oldest Node"
+  },
+  {
+    "pub_key": "027100442c3b79f606f80f322d98d499eefcb060599efc5d4ecb00209c2cb54190",
+    "comment": "Cash app, they many more nodes. Looking at LN viz, we can figure out some"
   }
 ]
