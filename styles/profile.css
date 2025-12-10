@@ -1,5 +1,8 @@
-/* Profile page specific styles */
+/* ==========================================================================
+   PROFILE PAGE SPECIFIC STYLES
+   ========================================================================== */
 
+/* Error Container */
 .error-container {
     display: flex;
     justify-content: center;
@@ -30,6 +33,7 @@
     line-height: 1.5;
 }
 
+/* Profile Container */
 .profile-container {
     width: var(--container-width, 90%);
     max-width: var(--max-content-width, 1200px);
@@ -53,7 +57,7 @@
     flex: 1;
 }
 
-.node-alias {
+.profile-header .node-alias {
     font-size: 2.5rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -89,7 +93,7 @@
 }
 
 .copy-btn:hover {
-    background: var(--primary-dark, #0056b3);
+    background: var(--primary-dark);
 }
 
 .node-type-badge {
@@ -149,7 +153,7 @@
     margin-bottom: 0.25rem;
 }
 
-.stat-value {
+.stat-card .stat-value {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text-primary);
@@ -209,7 +213,6 @@
     opacity: 0;
     transition: opacity 0.2s ease-in-out;
     width: 100%;
-    /* Ensure all content is selectable and clickable */
     user-select: text !important;
     pointer-events: auto !important;
     min-height: auto;
@@ -220,34 +223,15 @@
     opacity: 1;
 }
 
-/* Remove unnecessary min-height that was causing empty space */
-.tab-pane {
-    min-height: auto;
-}
-
-/* Specific fix for channels-table tab to remove empty space */
-#channels-table {
-    margin-top: 0;
-    padding-top: 0;
-}
-
-#channels-table .section-header {
-    margin-top: 0;
-    margin-bottom: 1.5rem;
-}
-
-/* Ensure all text content in tabs is selectable */
 .tab-pane * {
     user-select: text !important;
     pointer-events: auto !important;
 }
 
-/* Only prevent text selection on interactive elements */
 .tab-pane button, .tab-pane .btn, .tab-pane .tab-btn {
     user-select: none !important;
 }
 
-/* Force all links to be clickable */
 .tab-pane a, .info-item a, .info-value a {
     pointer-events: auto !important;
     user-select: text !important;
@@ -362,74 +346,7 @@
     line-height: 1.4;
 }
 
-/* Metrics Tab */
-.metrics-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
-}
-
-.metric-card {
-    background: var(--bg-primary);
-    border: 1px solid var(--bg-secondary);
-    border-radius: 12px;
-    padding: 2rem;
-}
-
-.metric-card h4 {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--text-primary);
-    margin-bottom: 1rem;
-    font-size: 1.1rem;
-}
-
-.metric-card h4 i {
-    color: var(--primary);
-}
-
-.metric-value {
-    font-size: 2.5rem;
-    font-weight: 700;
-    color: var(--primary);
-    margin-bottom: 1rem;
-}
-
-.metric-description {
-    color: var(--text-secondary);
-    line-height: 1.5;
-    margin: 0;
-}
-
-.metric-details {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-}
-
-.metric-item {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.75rem 0;
-    border-bottom: 1px solid var(--bg-secondary);
-}
-
-.metric-item:last-child {
-    border-bottom: none;
-}
-
-.metric-label {
-    font-weight: 500;
-    color: var(--text-secondary);
-}
-
-.metric-data {
-    color: var(--text-primary);
-    font-weight: 500;
-}
-
+/* Channels Tab - Treemap */
 #channelsTreemap {
     width: 100% !important;
     height: 500px !important;
@@ -449,7 +366,6 @@
     display: block !important;
 }
 
-/* Ensure channels tab takes full available space */
 #channels {
     display: flex;
     flex-direction: column;
@@ -461,22 +377,28 @@
     display: flex !important;
 }
 
-/* Extra safety: hide treemap unless channels tab is active */
 #channels:not(.active) #channelsTreemap {
     display: none !important;
 }
 
-/* Section Headers */
-.section-header {
+/* Channel Details Tab */
+#channels-table {
+    margin-top: 0;
+    padding-top: 0;
+}
+
+#channels-table .section-header {
+    margin-top: 0;
+    margin-bottom: 1.5rem;
     text-align: center;
-    margin-bottom: 2rem;
     padding-bottom: 1rem;
     border-bottom: 2px solid var(--bg-secondary);
 }
 
-.section-header h3 {
+#channels-table .section-header h3 {
     display: flex;
     align-items: center;
+    justify-content: center;
     gap: 0.5rem;
     color: var(--text-primary);
     margin: 0 0 0.5rem 0;
@@ -484,18 +406,18 @@
     font-weight: 600;
 }
 
-.section-header h3 i {
+#channels-table .section-header h3 i {
     color: var(--primary);
 }
 
-.section-header p {
+#channels-table .section-header p {
     color: var(--text-secondary);
     margin: 0;
     font-size: 1rem;
     line-height: 1.4;
 }
 
-/* Channels Table Styles */
+/* Channels Table Controls */
 .channels-table-controls {
     display: flex;
     justify-content: space-between;
@@ -561,21 +483,6 @@
     opacity: 1;
 }
 
-.channels-table th.fees-column {
-    min-width: 180px;
-    max-width: 200px;
-}
-
-.channels-table th.htlc-column {
-    min-width: 120px;
-    max-width: 140px;
-}
-
-.channels-table th.status-column {
-    min-width: 100px;
-    max-width: 120px;
-}
-
 .channels-table tbody tr {
     border-bottom: 1px solid var(--border-color);
     transition: background-color 0.2s ease;
@@ -595,6 +502,7 @@
     color: var(--text-primary);
 }
 
+/* Peer Info */
 .peer-info {
     display: flex;
     flex-direction: column;
@@ -614,6 +522,31 @@
     font-family: 'Courier New', monospace;
 }
 
+.peer-info-compact {
+    display: flex;
+    align-items: center;
+    min-width: 80px;
+    max-width: 120px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.peer-info-compact:hover {
+    background: var(--bg-secondary);
+    border-radius: 4px;
+    padding: 0.2rem 0.4rem;
+}
+
+.peer-alias-main {
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+}
+
 .capacity-cell {
     font-weight: 500;
     color: var(--accent-color);
@@ -621,7 +554,7 @@
     white-space: nowrap;
 }
 
-/* Fee Breakdown Styles */
+/* Fee Breakdown */
 .fees-cell {
     padding: 0.5rem;
     max-width: 200px;
@@ -661,7 +594,7 @@
     font-size: 0.8rem;
 }
 
-/* HTLC Breakdown Styles */
+/* HTLC Breakdown */
 .htlc-cell {
     padding: 0.5rem;
     max-width: 140px;
@@ -682,7 +615,7 @@
 }
 
 .htlc-label {
-    color: var (--text-secondary);
+    color: var(--text-secondary);
     font-size: 0.75rem;
     min-width: 30px;
 }
@@ -695,7 +628,7 @@
     text-align: right;
 }
 
-/* Status Breakdown Styles */
+/* Status Breakdown */
 .status-cell {
     padding: 0.5rem;
     max-width: 120px;
@@ -737,7 +670,7 @@
     text-align: right;
 }
 
-/* Error States for Table */
+/* Error Message */
 .error-message {
     display: flex;
     flex-direction: column;
@@ -753,33 +686,7 @@
     margin-bottom: 1rem;
 }
 
-/* Peer Info Compact Styles */
-.peer-info-compact {
-    display: flex;
-    align-items: center;
-    min-width: 80px;
-    max-width: 120px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.peer-info-compact:hover {
-    background: var(--bg-secondary);
-    border-radius: 4px;
-    padding: 0.2rem 0.4rem;
-}
-
-.peer-alias-main {
-    font-weight: 500;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-/* Page Size Select - Keep this as it's specific to profile page */
+/* Page Size Select */
 .page-size-select {
     padding: 0.5rem;
     border: 1px solid var(--border-color);
@@ -795,8 +702,68 @@
     border-color: var(--accent-color);
 }
 
-/* Responsive Design for Table */
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
 @media (max-width: 768px) {
+    .profile-container {
+        padding: 1rem;
+    }
+
+    .profile-header {
+        flex-direction: column;
+        gap: 1.5rem;
+        padding: 1.5rem;
+    }
+
+    .profile-actions {
+        width: 100%;
+        justify-content: stretch;
+    }
+
+    .profile-actions .btn-primary,
+    .profile-actions .btn-secondary {
+        flex: 1;
+        justify-content: center;
+    }
+
+    .profile-header .node-alias {
+        font-size: 2rem;
+    }
+
+    .quick-stats-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .tab-navigation {
+        flex-wrap: wrap;
+    }
+
+    .tab-btn {
+        flex: 1;
+        justify-content: center;
+        min-width: 120px;
+    }
+
+    .overview-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .rankings-grid {
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    }
+
+    .info-item {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.5rem;
+    }
+
+    .info-value {
+        text-align: left;
+    }
+
     .channels-table-controls {
         flex-direction: column;
         align-items: stretch;
@@ -853,69 +820,5 @@
     .channels-table th,
     .channels-table td {
         padding: 0.4rem 0.3rem;
-    }
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .profile-container {
-        padding: 1rem;
-    }
-
-    .profile-header {
-        flex-direction: column;
-        gap: 1.5rem;
-        padding: 1.5rem;
-    }
-
-    .profile-actions {
-        width: 100%;
-        justify-content: stretch;
-    }
-
-    .profile-actions .btn-primary,
-    .profile-actions .btn-secondary {
-        flex: 1;
-        justify-content: center;
-    }
-
-    .node-alias {
-        font-size: 2rem;
-    }
-
-    .quick-stats-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .tab-navigation {
-        flex-wrap: wrap;
-    }
-
-    .tab-btn {
-        flex: 1;
-        justify-content: center;
-        min-width: 120px;
-    }
-
-    .overview-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .rankings-grid {
-        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    }
-
-    .metrics-grid {
-        grid-template-columns: 1fr;
-    }
-
-    .info-item {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 0.5rem;
-    }
-
-    .info-value {
-        text-align: left;
     }
 }

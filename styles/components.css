@@ -175,11 +175,35 @@ td, th:not(.sortable),
     font-size: 0.9rem;
 }
 
+/* Reset button */
+.reset-btn {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-secondary);
+    color: var(--text-secondary);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    transition: all 0.2s ease;
+    font-size: 0.9rem;
+}
+
+.reset-btn:hover {
+    background: var(--primary);
+    color: var(--surface);
+}
+
 /* ==========================================================================
    SEARCH INPUTS
    ========================================================================== */
 
 .search-container {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 1rem;
     position: relative;
     flex: 1;
     max-width: 400px;
@@ -230,6 +254,7 @@ td, th:not(.sortable),
 /* CRITICAL: Ensure input has proper RIGHT padding when icon is present */
 .search-container .search-input {
     padding-right: 2.5rem !important;
+    padding-left: 1rem !important;
 }
 
 /* Table-specific search styling (for prank.html) */
@@ -250,15 +275,12 @@ td, th:not(.sortable),
     transition: border-color 0.2s ease;
 }
 
-/* Remove any padding-left that might be set by node-explorer.css */
-.search-container .search-icon {
-    left: auto !important;
-    right: 1rem !important;
-}
-
-/* Remove any padding-left that might be set by node-explorer.css */
-.search-container .search-input {
-    padding-left: 1rem !important;
+@media (max-width: 600px) {
+  .search-container {
+    flex-direction: column;
+    gap: 0.5rem;
+    max-width: none;
+  }
 }
 
 /* ==========================================================================
@@ -281,7 +303,6 @@ td, th:not(.sortable),
 }
 
 .pagination-container.container {
-    /* Override for node-explorer page */
     width: var(--container-width, 90%);
     max-width: var(--max-content-width, 1200px);
 }
@@ -563,12 +584,12 @@ td, th:not(.sortable),
 
 /* ==========================================================================
    BREADCRUMB COMPONENTS
-   ========================= */
+   ========================================================================== */
 
 .breadcrumb-container {
     width: var(--container-width, 90%);
     max-width: var(--max-content-width, 1200px);
-    margin: 0 auto 0.75rem auto;  /* Reduced from 1.5rem to 0.75rem */
+    margin: 0 auto 0.75rem auto;
     padding: 0 1rem;
 }
 
@@ -576,7 +597,7 @@ td, th:not(.sortable),
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin: 1.5rem 0 0.75rem 0;  /* Reduced bottom from 1.2rem to 0.75rem */
+    margin: 1.5rem 0 0.75rem 0;
     font-size: 0.9rem;
     color: var(--text-secondary);
     font-weight: 500;
@@ -659,32 +680,9 @@ td, th:not(.sortable),
 
 .page-header {
     text-align: center;
-    margin: 1rem 0 2rem 0;  /* Reduced top margin from 2rem to 1rem */
+    margin: 1rem 0 2rem 0;
     padding: 0 1rem;
     background: var(--bg-primary);
-    border-bottom: 1px solid var(--border);
-}
-
-.page-header h1 {
-    font-size: 2.5rem;
-    margin-bottom: 0.5rem;
-    color: var(--secondary);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.75rem;
-}
-
-.page-header h1 i {
-    color: var(--primary);
-    margin-right: 0.5rem;
-}
-
-.page-header p {
-    color: var(--text-secondary);
-    font-size: 1.1rem;
-    max-width: 600px;
-    margin: 0 auto;
 }
 
 /* Modern Header Layout (Rankings, Profile styles) */

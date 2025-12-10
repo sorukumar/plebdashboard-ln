@@ -1,5 +1,6 @@
-/* Table-specific styles for data table functionality */
-/* Uses Bitcoin Data Labs design system variables */
+/* ==========================================================================
+   TABLE-SPECIFIC STYLES FOR DATA TABLE FUNCTIONALITY
+   ========================================================================== */
 
 body {
     min-height: 100vh;
@@ -26,7 +27,6 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
     gap: 1rem;
     flex-wrap: wrap;
     background: var(--bg-secondary);
@@ -48,6 +48,7 @@ body {
 
 /* Data Table */
 .data-table {
+    width: 100%;
     margin: 0 auto;
     border-collapse: collapse;
     font-size: 0.9rem;
@@ -120,6 +121,7 @@ body {
     color: var(--text-primary);
 }
 
+/* Table Cell Styles */
 .last-seen-cell {
     white-space: nowrap;
     min-width: 90px;
@@ -133,6 +135,10 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.pubkey-cell {
+    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }
 
 /* Pub key styling */
@@ -167,11 +173,23 @@ body {
     opacity: 1;
 }
 
-.pubkey-cell {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+/* Loading indicator */
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: var(--text-secondary);
 }
 
-/* Responsive Design */
+.loading i {
+    font-size: 1.5rem;
+    margin-right: 0.5rem;
+    color: var(--primary);
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN
+   ========================================================================== */
+
 @media (max-width: 768px) {
     .table-controls {
         flex-direction: column;
