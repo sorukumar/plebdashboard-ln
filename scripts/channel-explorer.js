@@ -131,23 +131,69 @@ class ChannelExplorerManager {
 
     applyFilters() {
         this.filteredChannels = this.allChannels.filter(channel => {
-            // Search filter
-            if (this.node1SearchTerm) {
-                const searchLower = this.node1SearchTerm.toLowerCase();
-                const matchesSearch = 
-                    (channel.alias_1 || '').toLowerCase().includes(searchLower) ||
-                    (channel.node1_pub || '').toLowerCase().includes(searchLower);
-                if (!matchesSearch) return false;
+            // Bidirectional search logic
+            const node1Term = this.node1SearchTerm.toLowerCase();
+            const node2Term = this.node2SearchTerm.toLowerCase();
+            
+            // Helper function to check if a search term matches either node
+            const matchesNode = (searchTerm, node1Data, node2Data, node1Pub, node2Pub) => {
+                if (!searchTerm) return true; // Empty search = match all
+                
+                return (
+                    (node1Data || '').toLowerCase().includes(searchTerm) ||
+                    (node1Pub || '').toLowerCase().includes(searchTerm) ||
+                    (node2Data || '').toLowerCase().includes(searchTerm) ||
+                    (node2Pub || '').toLowerCase().includes(searchTerm)
+                );
+            };
+            
+            // Case 1: Both search boxes filled - find channels BETWEEN these two nodes
+            if (node1Term && node2Term) {
+                const node1MatchesFirst = (
+                    (channel.alias_1 || '').toLowerCase().includes(node1Term) ||
+                    (channel.node1_pub || '').toLowerCase().includes(node1Term)
+                );
+                const node1MatchesSecond = (
+                    (channel.alias_2 || '').toLowerCase().includes(node1Term) ||
+                    (channel.node2_pub || '').toLowerCase().includes(node1Term)
+                );
+                
+                const node2MatchesFirst = (
+                    (channel.alias_1 || '').toLowerCase().includes(node2Term) ||
+                    (channel.node1_pub || '').toLowerCase().includes(node2Term)
+                );
+                const node2MatchesSecond = (
+                    (channel.alias_2 || '').toLowerCase().includes(node2Term) ||
+                    (channel.node2_pub || '').toLowerCase().includes(node2Term)
+                );
+                
+                // Check bidirectional: (node1 in pos1 AND node2 in pos2) OR (node1 in pos2 AND node2 in pos1)
+                return (node1MatchesFirst && node2MatchesSecond) || (node1MatchesSecond && node2MatchesFirst);
             }
-
-            if (this.node2SearchTerm) {
-                const searchLower = this.node2SearchTerm.toLowerCase();
-                const matchesSearch = 
-                    (channel.alias_2 || '').toLowerCase().includes(searchLower) ||
-                    (channel.node2_pub || '').toLowerCase().includes(searchLower);
-                if (!matchesSearch) return false;
+            
+            // Case 2: Only Node 1 search filled - show ALL channels involving this node
+            if (node1Term) {
+                return matchesNode(
+                    node1Term,
+                    channel.alias_1,
+                    channel.alias_2,
+                    channel.node1_pub,
+                    channel.node2_pub
+                );
             }
-
+            
+            // Case 3: Only Node 2 search filled - show ALL channels involving this node
+            if (node2Term) {
+                return matchesNode(
+                    node2Term,
+                    channel.alias_1,
+                    channel.alias_2,
+                    channel.node1_pub,
+                    channel.node2_pub
+                );
+            }
+            
+            // Case 4: Both empty - show all channels
             return true;
         });
 
@@ -165,7 +211,15 @@ class ChannelExplorerManager {
             const filtered = this.filteredChannels.length;
             const percentage = ((filtered / total) * 100).toFixed(1);
             
-            statsElement.textContent = `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} channels (${percentage}%)`;
+            let contextMessage = '';
+            if (this.node1SearchTerm && this.node2SearchTerm) {
+                contextMessage = ` • Showing channels between these nodes`;
+            } else if (this.node1SearchTerm || this.node2SearchTerm) {
+                const searchTerm = this.node1SearchTerm || this.node2SearchTerm;
+                contextMessage = ` • Showing all channels involving "${searchTerm}"`;
+            }
+            
+            statsElement.textContent = `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} channels (${percentage}%)${contextMessage}`;
         }
     }
 

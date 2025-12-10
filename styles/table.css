@@ -34,6 +34,30 @@ body {
     border-radius: 12px;
 }
 
+/* Column Header with Tooltip */
+.column-header-wrapper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    cursor: help;
+}
+
+.column-info-icon {
+    font-size: 0.75rem;
+    color: var(--primary);
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+}
+
+.column-header-wrapper:hover .column-info-icon {
+    opacity: 1;
+}
+
+/* Sortable column headers */
+th.sortable .column-header-wrapper {
+    cursor: pointer;
+}
+
 /* Table Container */
 .table-container {
     width: var(--container-width, 90%);
@@ -135,6 +159,22 @@ body {
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+}
+
+.alias-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-block;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+}
+
+.alias-link:hover {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    transform: translateX(2px);
 }
 
 .pubkey-cell {

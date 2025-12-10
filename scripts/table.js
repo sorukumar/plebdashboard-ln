@@ -252,12 +252,34 @@ class DataTableManager {
         
         if (!table || !thead || !tbody) return;
         
+        // Define tooltips for technical columns
+        const columnTooltips = {
+            'pleb_rank': 'Composite score combining routing quality, capacity, and network connectivity. Lower is better.',
+            'betweenness_rank': 'How often this node appears on shortest payment paths. Lower rank = more central routing position.',
+            'eigenvector_rank': 'Quality of connections - well-connected to other important nodes. Lower is better.',
+            'weighted_degree_rank': 'Capacity-weighted connection quality. Considers both number and size of channels. Lower is better.'
+        };
+        
         thead.innerHTML = '';
         const headerRow = document.createElement('tr');
         
         this.visibleColumns.forEach(column => {
             const th = document.createElement('th');
-            th.textContent = this.formatColumnName(column);
+            const columnName = this.formatColumnName(column);
+            
+            // Add tooltip and info icon if available
+            if (columnTooltips[column]) {
+                th.innerHTML = `
+                    <span class="column-header-wrapper" title="${columnTooltips[column]}">
+                        ${columnName}
+                        <i class="fas fa-info-circle column-info-icon"></i>
+                    </span>
+                `;
+                th.title = columnTooltips[column]; // Fallback for entire cell
+            } else {
+                th.textContent = columnName;
+            }
+            
             th.dataset.column = column;
             
             // Only add sorting for sortable columns
@@ -284,8 +306,22 @@ class DataTableManager {
                 const value = row[key];
                 const td = document.createElement('td');
 
+                // Special handling for alias column - make it clickable
+                if (key === 'alias') {
+                    const pubkey = row['pub_key'];
+                    td.classList.add('alias-cell');
+                    if (pubkey && value) {
+                        td.innerHTML = `
+                            <a href="profile.html?node=${encodeURIComponent(pubkey)}" class="alias-link" title="View ${value}'s profile">
+                                ${value}
+                            </a>
+                        `;
+                    } else {
+                        td.textContent = value || '-';
+                    }
+                }
                 // Special handling for pubkey column
-                if (key === 'pub_key') {
+                else if (key === 'pub_key') {
                     td.classList.add('pubkey-cell');
                     td.innerHTML = `
                         <span class="pubkey-truncated" onclick="copyPubKey('${value || ''}', this)" title="Click to copy: ${value || ''}">

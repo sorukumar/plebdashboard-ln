@@ -321,6 +321,30 @@ class NodeExplorerManager {
             
             statsElement.textContent = `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} nodes (${percentage}%)`;
         }
+        
+        // Update active filter count badge
+        this.updateActiveFilterCount();
+    }
+    
+    updateActiveFilterCount() {
+        const badge = document.getElementById('activeFilterCount');
+        if (!badge) return;
+        
+        // Count how many filters are active
+        let activeCount = 0;
+        Object.values(this.filterRanges).forEach(range => {
+            if (range.min !== null || range.max !== null) {
+                activeCount++;
+            }
+        });
+        
+        // Show/hide badge based on count
+        if (activeCount > 0) {
+            badge.textContent = `${activeCount} active`;
+            badge.style.display = 'inline-flex';
+        } else {
+            badge.style.display = 'none';
+        }
     }
 
     sortNodes() {
@@ -350,14 +374,22 @@ class NodeExplorerManager {
             else if (sortField.includes('rank')) {
                 comparison = Number(aVal) - Number(bVal);
             }
-            // For numeric columns like capacity/channels, higher is better (natural descending)
+            // For numeric columns like capacity/channels - default to descending (High to Low)
             else if (['total_channels', 'total_capacity'].includes(sortField)) {
-                comparison = Number(bVal) - Number(aVal); // Natural descending
-                sortDirection = sortDirection === 'asc' ? 'desc' : 'asc'; // Flip direction for these
+                comparison = Number(bVal) - Number(aVal); // bVal - aVal = descending by default
+            }
+            else {
+                // Default numeric comparison
+                comparison = Number(aVal) - Number(bVal);
             }
 
-            // Apply direction
-            return sortDirection === 'desc' ? -comparison : comparison;
+            // Apply direction only for fields that have explicit direction suffix
+            if (this.currentSort.includes(':')) {
+                return sortDirection === 'desc' ? -comparison : comparison;
+            }
+            
+            // For fields without direction suffix, use the natural comparison
+            return comparison;
         });
     }
 
@@ -396,6 +428,7 @@ class NodeExplorerManager {
         this.renderNodes();
         this.updatePagination();
         this.updateFilterStats();
+        this.updateActiveFilterCount();
     }
 
     toggleView(view) {
