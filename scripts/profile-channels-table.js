@@ -96,7 +96,7 @@ class ChannelsTableManager {
 
     getChannelColumns() {
         return [
-            'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 'alias_1', 'alias_2'
+            'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 'alias_1', 'alias_2', 'birth_tx'
         ];
     }
 
