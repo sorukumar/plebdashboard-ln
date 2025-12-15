@@ -224,13 +224,13 @@ trending.css → Node explorer styles
 | source                          | uint64    | Data source identifier                           |
 | update_dt                       | object    | Last update datetime (string)                    |
 | snapshot_date                   | object    | Date of data snapshot                            |
-| first_seen_week                 | object    | First seen week (string)                         |
 | closed_channels_count           | int64     | Number of closed channels                        |
 | node_type                       | object    | Node type (e.g., routing, merchant, etc.)        |
 | birth_tx                        | object    | Birth tx (first time node was seen)                   |
 | birth_chan                      | object    | Chan id of node's birth (txid)                      |
 | birth_tx_active                 | object    | Birthtx (1sttime node was seen-active chnl)          |
 | birth_chan_active               | object    | Channel ID of node's active birth                |
+| first_seen_week                 | object    | First seen week (string)                         |
 | total_channels                  | int64     | Total number of channels                         |
 | channel_segment                 | object    | Channel segment (categorical bin)                |
 | category_counts                 | object    | Category counts (JSON or stringified dict)       |
