@@ -47,10 +47,11 @@
     justify-content: space-between;
     align-items: flex-start;
     margin-bottom: 2rem;
-    padding: 2rem;
-    background: var(--bg-primary);
-    border: 1px solid var(--bg-secondary);
-    border-radius: 16px;
+    padding: 1.5rem 0 1.5rem 0;
+    background: transparent; /* remove white box */
+    border: none;
+    border-radius: 0;
+    box-shadow: none;
 }
 
 .profile-basic-info {
@@ -58,18 +59,18 @@
 }
 
 .profile-header .node-alias {
-    font-size: 2.5rem;
+    font-size: 2.3rem;
     font-weight: 600;
-    color: var(--text-primary);
-    margin: 0 0 1rem 0;
+    color: var(--secondary);
+    margin: 0 0 0.9rem 0;
     line-height: 1.2;
 }
 
 .node-pubkey-container {
-    display: flex;
+    display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    margin-bottom: 1rem;
+    gap: 0.4rem;
+    position: relative;
 }
 
 .node-pubkey {
@@ -78,34 +79,92 @@
     color: var(--text-secondary);
     background: var(--bg-secondary);
     padding: 0.5rem 0.75rem;
-    border-radius: 6px;
+    border-radius: 8px;
     word-break: break-all;
 }
 
 .copy-btn {
-    background: var(--primary);
-    color: white;
-    border: none;
-    border-radius: 6px;
-    padding: 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--primary);
+    padding: 0.28rem 0.48rem;
+    border-radius: 999px;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 3px rgba(42,51,66,0.12);
+    transition: background 0.15s ease, color 0.15s ease,
+                box-shadow 0.15s ease, transform 0.08s ease;
 }
 
 .copy-btn:hover {
-    background: var(--primary-dark);
+    background: #fff7f2; /* light warm tint, in family with --primary */
+    color: var(--primary);
+    box-shadow: 0 2px 6px rgba(42,51,66,0.16);
+    transform: translateY(-1px);
 }
 
-.node-type-badge {
+.copy-pubkey-wrapper {
+    position: relative;
     display: inline-flex;
     align-items: center;
-    gap: 0.5rem;
-    background: var(--bg-secondary);
+}
+
+.copy-tooltip {
+    position: absolute;
+    top: 120%;
+    right: 0;
+    min-width: 190px;
+    padding: 0.4rem 0;
+    background: var(--surface);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(42,51,66,0.16);
+    border: 1px solid var(--border);
+    z-index: 20;
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-4px);
+    transition: opacity 0.12s ease, transform 0.12s ease;
+}
+
+.copy-pubkey-wrapper:hover .copy-tooltip {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+}
+
+.copy-tooltip-item {
+    width: 100%;
+    padding: 0.45rem 0.9rem;
+    background: transparent;
+    border: none;
     color: var(--text-primary);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    font-size: 0.9rem;
-    font-weight: 500;
+    text-align: left;
+    font-size: 0.85rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.copy-tooltip-item:hover {
+    background: #fff7f2;
+    color: var(--secondary);
+}
+
+.copy-tooltip-hint {
+    padding: 0.35rem 0.9rem 0.25rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    border-top: 1px solid var(--bg-secondary);
+}
+
+@media (max-width: 640px) {
+    .copy-tooltip {
+        right: auto;
+        left: 0;
+    }
 }
 
 .profile-actions {
@@ -700,6 +759,24 @@
 .page-size-select:focus {
     outline: none;
     border-color: var(--accent-color);
+}
+
+/* Node type badge using primary accent */
+.node-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    background: #fff7f2;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.node-type-badge i {
+    font-size: 0.75rem;
 }
 
 /* ==========================================================================

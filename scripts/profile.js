@@ -7,6 +7,7 @@ class NodeProfileManager {
         this.activeTab = 'overview';
         this.chartManager = null;
         this.channelsTableManager = null;
+        this.connectAddress = null;
         this.init();
     }
 
@@ -130,6 +131,27 @@ class NodeProfileManager {
         safeSet('nodeAlias', node.alias || 'Unknown Node');
         safeSet('nodePubkey', node.pub_key || 'Unknown');
         safeSet('nodeType', node.node_type || 'Unknown');
+
+        // Build full connect address: pubkey@host:port
+        let connectAddress = null;
+        const addr1 = node.address_1;
+        const addr2 = node.address_2;
+        // Prefer a non-null address, onion or IP
+        let rawAddr = addr1 || addr2 || null;
+        if (rawAddr && typeof rawAddr === 'string') {
+            // If it already contains '@', assume it's already full
+            if (rawAddr.includes('@')) {
+                connectAddress = rawAddr;
+            } else {
+                connectAddress = `${node.pub_key}@${rawAddr}`;
+            }
+        }
+        this.connectAddress = connectAddress;
+        const connectAddrEl = document.getElementById('connectAddress');
+        if (connectAddrEl) {
+            connectAddrEl.textContent = connectAddress || 'N/A';
+        }
+
         // Quick stats
         safeSet('overallRank', this.formatRank(node.pleb_rank));
         safeSet('totalCapacity', node.ftotal_capacity || 'Unknown');
@@ -217,25 +239,58 @@ class NodeProfileManager {
     }
 
     setupEventListeners() {
-        // Copy pubkey functionality
+        // Copy pubkey functionality (primary click on icon)
         const copyBtn = document.getElementById('copyPubkeyBtn');
-        if (copyBtn && this.nodeData) {
+        if (copyBtn) {
             copyBtn.addEventListener('click', () => {
-                navigator.clipboard.writeText(this.nodeData.pub_key).then(() => {
-                    const icon = copyBtn.querySelector('i');
-                    const originalClass = icon.className;
-                    icon.className = 'fas fa-check';
-                    copyBtn.title = 'Copied!';
-                    
-                    setTimeout(() => {
-                        icon.className = originalClass;
-                        copyBtn.title = 'Copy public key';
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy: ', err);
-                });
+                if (!this.nodeData) return;
+                this.copyToClipboard(this.nodeData.pub_key, copyBtn, 'Copy public key');
             });
         }
+
+        // Tooltip actions
+        const copyPubkeyAction = document.getElementById('copyPubkeyAction');
+        if (copyPubkeyAction) {
+            copyPubkeyAction.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!this.nodeData) return;
+                const wrapperBtn = document.getElementById('copyPubkeyBtn');
+                this.copyToClipboard(this.nodeData.pub_key, wrapperBtn, 'Copy public key');
+            });
+        }
+
+        const copyConnectAddressAction = document.getElementById('copyConnectAddressAction');
+        if (copyConnectAddressAction) {
+            copyConnectAddressAction.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (!this.connectAddress) {
+                    console.warn('No connect address available for this node');
+                    return;
+                }
+                const wrapperBtn = document.getElementById('copyPubkeyBtn');
+                this.copyToClipboard(this.connectAddress, wrapperBtn, 'Copy public key', 'Copy connect address');
+            });
+        }
+    }
+
+    copyToClipboard(text, buttonEl, defaultTitle, successTitleOverride) {
+        if (!text) return;
+        navigator.clipboard.writeText(text).then(() => {
+            if (!buttonEl) return;
+            const icon = buttonEl.querySelector('i');
+            const originalClass = icon ? icon.className : null;
+            const originalTitle = buttonEl.title || defaultTitle;
+
+            if (icon) icon.className = 'fas fa-check';
+            buttonEl.title = successTitleOverride || 'Copied!';
+
+            setTimeout(() => {
+                if (icon && originalClass) icon.className = originalClass;
+                buttonEl.title = originalTitle;
+            }, 1600);
+        }).catch(err => {
+            console.error('Failed to copy: ', err);
+        });
     }
 
     setupTabNavigation() {

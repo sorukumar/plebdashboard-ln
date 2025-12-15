@@ -71,7 +71,6 @@ class DataTableManager {
         'node_type',
         'total_capacity',
         'num_channels',
-        'last_seen',
         'pub_key'
     ];
 
@@ -265,19 +264,18 @@ class DataTableManager {
         
         this.visibleColumns.forEach(column => {
             const th = document.createElement('th');
-            const columnName = this.formatColumnName(column);
+            const shortLabel = this.getShortHeaderLabel(column);
             
-            // Add tooltip and info icon if available
             if (columnTooltips[column]) {
                 th.innerHTML = `
                     <span class="column-header-wrapper" title="${columnTooltips[column]}">
-                        ${columnName}
+                        ${shortLabel}
                         <i class="fas fa-info-circle column-info-icon"></i>
                     </span>
                 `;
-                th.title = columnTooltips[column]; // Fallback for entire cell
+                th.title = columnTooltips[column];
             } else {
-                th.textContent = columnName;
+                th.innerHTML = shortLabel;
             }
             
             th.dataset.column = column;
@@ -328,11 +326,18 @@ class DataTableManager {
                             ${(value && typeof value === 'string') ? value.substring(0, 8) + '...' : '-'}
                         </span>
                     `;
-                } else if (key === 'last_seen') {
-                    td.classList.add('last-seen-cell'); // for custom styling
-                    td.textContent = value ? value : '-'; // assuming string YYYY-MM
                 } else if (key === 'num_channels') {
                     td.textContent = value ? Number(value).toLocaleString() : '-';
+                } else if (key === 'total_capacity') {
+                    td.textContent = this.formatCapacity(value);
+                } else if (key === 'node_type') {
+                    // Show compact node type with full value on hover
+                    const full = typeof value === 'string' ? value : '';
+                    const compact = this.getCompactNodeType(full);
+                    td.textContent = compact || '-';
+                    if (full) {
+                        td.title = full; // hover shows full value
+                    }
                 } else {
                     td.textContent = this.formatCellValue(value);
                 }
@@ -344,13 +349,80 @@ class DataTableManager {
         table.style.display = 'table';
         this.updatePaginationControls();
     }
-    
+
+    getShortHeaderLabel(column) {
+        switch (column) {
+            case 'pleb_rank':
+                return 'PLEB<br>RANK';
+            case 'channels_rank':
+                return 'CHAN<br>RANK';
+            case 'capacity_rank':
+                return 'CAP<br>RANK';
+            case 'weighted_degree_rank':
+                return 'W-DEG<br>RANK';
+            case 'betweenness_rank':
+                return 'BETW<br>RANK';
+            case 'eigenvector_rank':
+                return 'EIG<br>RANK';
+            case 'alias':
+                return 'ALIAS';
+            case 'node_type':
+                return 'NODE<br>TYPE';
+            case 'total_capacity':
+                return 'TOT<br>CAP';
+            case 'num_channels':
+                return 'NUM<br>CHANS';
+            case 'pub_key':
+                return 'PUB<br>KEY';
+            default:
+                return this.formatColumnName(column);
+        }
+    }
+
+    getCompactNodeType(full) {
+        if (!full) return '';
+        // Split on commas, trim parts, abbreviate some known words, then join back
+        const parts = full.split(',').map(p => p.trim()).filter(Boolean);
+        const mapWord = (w) => {
+            const lw = w.toLowerCase();
+            if (lw === 'exchange') return 'Exch';
+            if (lw === 'wallet') return 'Wallet';
+            if (lw === 'lsp') return 'LSP';
+            if (lw === 'merchant') return 'Merch';
+            if (lw === 'payment') return 'Pay';
+            return w;
+        };
+        return parts.map(mapWord).join(', ');
+    }
+
     formatColumnName(column) {
         return column
             .replace(/([A-Z])/g, ' $1')
             .replace(/^./, str => str.toUpperCase())
             .replace(/_/g, ' ')
             .trim();
+    }
+
+    formatCapacity(value) {
+        if (value === null || value === undefined) return '-';
+        const capacity = Number(value);
+        if (Number.isNaN(capacity)) return '-';
+
+        if (capacity < 1_000_000) {
+            // < 1M sats -> k sats
+            return `${(capacity / 1_000).toLocaleString(undefined, { maximumFractionDigits: 0 })}k sats`;
+        } else if (capacity < 100_000_000) {
+            // < 100M sats -> m sats
+            return `${(capacity / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 0 })}m sats`;
+        } else {
+            // >= 100M sats -> bitcoin
+            const btc = capacity / 100_000_000;
+            if (btc >= 5) {
+                return `${btc.toLocaleString(undefined, { maximumFractionDigits: 0 })} bitcoin`;
+            } else {
+                return `${btc.toLocaleString(undefined, { maximumFractionDigits: 1 })} bitcoin`;
+            }
+        }
     }
     
     formatCellValue(value) {

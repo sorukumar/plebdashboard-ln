@@ -56,9 +56,16 @@
                     <h1 id="nodeAlias" class="node-alias">Loading...</h1>
                     <div class="node-pubkey-container">
                         <span class="node-pubkey" id="nodePubkey">Loading...</span>
-                        <button class="copy-btn" id="copyPubkeyBtn" title="Copy public key">
-                            <i class="fas fa-copy"></i>
-                        </button>
+                        <div class="copy-pubkey-wrapper">
+                            <button class="copy-btn" id="copyPubkeyBtn" title="Copy public key">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                            <div class="copy-tooltip" id="copyTooltip">
+                                <button id="copyPubkeyAction" class="copy-tooltip-item">Copy pubkey</button>
+                                <button id="copyConnectAddressAction" class="copy-tooltip-item">Copy connect address</button>
+                                <div class="copy-tooltip-hint">pubkey@host:port for adding as peer</div>
+                            </div>
+                        </div>
                     </div>
                     <div class="node-type-badge" id="nodeTypeBadge">
                         <i class="fas fa-server"></i>
@@ -154,6 +161,10 @@
                                 <div class="info-item">
                                     <span class="info-label">Tor Address</span>
                                     <span class="info-value" id="address2">-</span>
+                                </div>
+                                <div class="info-item">
+                                    <span class="info-label">Connect address</span>
+                                    <span class="info-value" id="connectAddress">-</span>
                                 </div>
                             </div>
                         </div>
