@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/node-explorer.css">
+    <link rel="stylesheet" href="styles/table.css">
 </head>
 <body>
     <!-- Bitcoin Data Labs Header -->
@@ -58,24 +59,6 @@
                         <i class="fas fa-search search-icon"></i>
                     </div>
 
-                    <!-- Sort -->
-                    <select id="sortBy" class="filter-select">
-                        <option value="capacity:desc">Capacity: High to Low</option>
-                        <option value="capacity:asc">Capacity: Low to High</option>
-                        <option value="birth_tx:asc">Birth TX: Oldest First</option>
-                        <option value="birth_tx:desc">Birth TX: Newest First</option>
-                    </select>
-
-                    <!-- View Toggle -->
-                    <div class="view-toggle">
-                        <button class="view-btn active" data-view="grid" title="Grid View">
-                            <i class="fas fa-th-large"></i>
-                        </button>
-                        <button class="view-btn" data-view="list" title="List View">
-                            <i class="fas fa-list"></i>
-                        </button>
-                    </div>
-
                     <!-- Reset -->
                     <button id="resetFilters" class="reset-btn">
                         <i class="fas fa-undo"></i>
@@ -103,10 +86,11 @@
             </div>
 
             <!-- Channel Explorer Container -->
-            <div id="channelExplorerContainer" class="node-explorer-container grid-view" style="display: none;">
-                <div id="channelExplorerGrid" class="node-explorer-grid">
-                    <!-- Channels will be populated here -->
-                </div>
+            <div id="channelExplorerContainer" class="table-container" style="display: none;">
+                <table id="channelTable" class="data-table">
+                    <thead id="tableHead"></thead>
+                    <tbody id="tableBody"></tbody>
+                </table>
             </div>
 
             <!-- Pagination -->

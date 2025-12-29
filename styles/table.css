@@ -177,6 +177,42 @@ th.sortable .column-header-wrapper {
     transform: translateX(2px);
 }
 
+.peer-aliases {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+/* Fee breakdown styles */
+.fee-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.fee-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.8rem;
+}
+
+.fee-label {
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.fee-value {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.disabled-text {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+
 .pubkey-cell {
     font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
 }

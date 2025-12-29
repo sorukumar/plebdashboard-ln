@@ -49,7 +49,7 @@ ln-nodeprofile-rank/
 - **profile.html**  
   Node profile: stats, rankings, metrics, tabs (Overview, Rankings, Channels, Channel Details), copy pubkey, all dynamic. Uses profile.js, profile-channels.js, profile-channels-table.js.
 - **channel-explorer.html**  
-  Channel Explorer: advanced search, filter, sort, grid/list view, pagination. All logic in channel-explorer.js.
+  Channel Explorer: table view with search by Node 1/Node 2, sort, pagination. All logic in channel-explorer.js.
 - **node-explorer.html**  
   Node Explorer: advanced search, filter, sort, grid/list view, pagination. All logic in node-explorer.js.
 - **README.md**  
@@ -99,7 +99,7 @@ ln-nodeprofile-rank/
 - **node-explorer.js**  
   Node Explorer: load/filter/sort nodes, advanced filters, search, grid/list, pagination, render node cards, all UI events.
 - **channel-explorer.js**  
-  Channel Explorer: load/filter/sort channels, advanced filters, search, grid/list, pagination, render channel cards, all UI events.
+  Channel Explorer: load/filter/sort channels, table view with fee breakdowns, search by nodes, pagination, render table rows, all UI events.
 
 ---
 

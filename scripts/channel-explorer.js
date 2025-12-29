@@ -1,27 +1,113 @@
 import { parquetRead } from 'https://cdn.jsdelivr.net/npm/hyparquet@1.17.1/+esm';
 
+// Function to copy pub key to clipboard
+function copyPubKey(pubKey, element) {
+    navigator.clipboard.writeText(pubKey).then(() => {
+        // Store original content
+        const originalText = element.textContent;
+
+        // Update to show success state
+        element.textContent = 'Copied!';
+        element.style.background = 'var(--primary)';
+        element.style.color = 'white';
+
+        // Revert back after 1.5 seconds
+        setTimeout(() => {
+            element.textContent = originalText;
+            element.style.background = '';
+            element.style.color = '';
+        }, 1500);
+    }).catch(err => {
+        console.error('Failed to copy: ', err);
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = pubKey;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        // Show success state even with fallback
+        element.textContent = 'Copied!';
+        element.style.background = 'var(--primary)';
+        element.style.color = 'white';
+        
+        setTimeout(() => {
+            element.textContent = pubKey.substring(0, 8) + '...';
+            element.style.background = '';
+            element.style.color = '';
+        }, 1500);
+    });
+}
+
+window.copyPubKey = copyPubKey;
+
 class ChannelExplorerManager {
+    columns = [
+        'peer', 'capacity', 'birth_tx', 'node1_fees', 'node2_fees', 'status'
+    ];
+
+    visibleColumns = [
+        'peer', 'capacity', 'birth_tx', 'node1_fees', 'node2_fees', 'status'
+    ];
+
     constructor() {
         this.allChannels = [];
         this.filteredChannels = [];
         this.currentPage = 1;
-        this.itemsPerPage = 20;
-        this.currentView = 'grid';
-        this.currentSort = 'capacity:desc';
-        this.node1SearchTerm = '';
-        this.node2SearchTerm = '';
+        this.itemsPerPage = 50;
+        this.sortColumn = null;
+        this.sortDirection = 'asc';
         
-        this.init();
+        if (window.location.protocol === 'file:') {
+            this.showError('Please use Live Server extension or local web server.');
+            return;
+        }
+        
+        this.initializeEventListeners();
+        this.loadChannelData();
     }
 
-    async init() {
-        await this.loadChannelData();
-        this.setupEventListeners();
-        this.renderChannels();
-        this.updateFilterStats();
-        this.showContent();
-    }
+    initializeEventListeners() {
+        const node1SearchInput = document.getElementById('node1SearchInput');
+        const node2SearchInput = document.getElementById('node2SearchInput');
+        if (node1SearchInput) {
+            node1SearchInput.addEventListener('input', () => this.filterData());
+        }
+        if (node2SearchInput) {
+            node2SearchInput.addEventListener('input', () => this.filterData());
+        }
+        
+        const resetBtn = document.getElementById('resetFilters');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                this.resetFilters();
+            });
+        }
 
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                if (this.currentPage > 1) {
+                    this.currentPage--;
+                    this.renderTable();
+                }
+            });
+        }
+        
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                const totalPages = Math.ceil(this.filteredChannels.length / this.itemsPerPage);
+                if (this.currentPage < totalPages) {
+                    this.currentPage++;
+                    this.renderTable();
+                }
+            });
+        }
+    }
+    
     async loadChannelData() {
         try {
             const response = await fetch('data/channel_profile.parquet');
@@ -32,17 +118,30 @@ class ChannelExplorerManager {
             await parquetRead({
                 file: arrayBuffer,
                 onComplete: (result) => {
-                    const columns = [
+                    const parquetColumns = [
                         'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 'alias_1', 'alias_2', 'birth_tx', 'channel_id', 'in_latest_gossip'
                     ];
                     
                     if (Array.isArray(result) && result.length > 0) {
                         this.allChannels = result.map(row =>
-                            Object.fromEntries(columns.map((col, i) => [col, row[i]]))
-                        ).filter(channel => channel.capacity && (channel.alias_1 || channel.alias_2));
+                            Object.fromEntries(parquetColumns.map((col, i) => [col, row[i]]))
+                        ).filter(channel => channel.capacity && (channel.alias_1 || channel.alias_2)).map(channel => {
+                            const alias1 = channel.alias_1 || (channel.node1_pub ? channel.node1_pub.substring(0, 10) + '...' : 'Unknown');
+                            const alias2 = channel.alias_2 || (channel.node2_pub ? channel.node2_pub.substring(0, 10) + '...' : 'Unknown');
+                            return {
+                                ...channel,
+                                alias_1: alias1,
+                                alias_2: alias2,
+                                peer: `${alias1} ↔ ${alias2}`,
+                                node1_policy_parsed: this.parsePolicy(channel.node1_policy),
+                                node2_policy_parsed: this.parsePolicy(channel.node2_policy),
+                                status: this.getStatus(this.parsePolicy(channel.node1_policy), this.parsePolicy(channel.node2_policy))
+                            };
+                        });
                         
                         this.filteredChannels = [...this.allChannels];
-                        this.sortChannels();
+                        this.renderTable();
+                        this.hideLoading();
                     }
                 },
                 onError: (error) => {
@@ -56,152 +155,402 @@ class ChannelExplorerManager {
         }
     }
 
-    setupEventListeners() {
-        // Search functionality
-        const node1SearchInput = document.getElementById('node1SearchInput');
-        const node2SearchInput = document.getElementById('node2SearchInput');
-        
-        if (node1SearchInput) {
-            node1SearchInput.addEventListener('input', (e) => {
-                this.node1SearchTerm = e.target.value;
-                this.applyFilters();
-            });
+    parsePolicy(policyStr) {
+        if (!policyStr || policyStr === 'null' || policyStr === null) {
+            return {
+                announced: false,
+                disabled: false,
+                fee_base_msat: 0,
+                fee_rate_milli_msat: 0,
+                inbound_fee_base_msat: 0,
+                inbound_fee_rate_milli_msat: 0,
+                min_htlc: 0,
+                max_htlc_msat: 0,
+                time_lock_delta: 0
+            };
         }
         
-        if (node2SearchInput) {
-            node2SearchInput.addEventListener('input', (e) => {
-                this.node2SearchTerm = e.target.value;
-                this.applyFilters();
-            });
-        }
-
-        // Sort functionality
-        const sortSelect = document.getElementById('sortBy');
-        if (sortSelect) {
-            sortSelect.addEventListener('change', (e) => {
-                this.currentSort = e.target.value;
-                this.currentPage = 1;
-                this.sortChannels();
-                this.renderChannels();
-            });
-        }
-
-        // Reset filters
-        const resetBtn = document.getElementById('resetFilters');
-        if (resetBtn) {
-            resetBtn.addEventListener('click', () => {
-                this.resetFilters();
-            });
-        }
-
-        // View toggle
-        const viewBtns = document.querySelectorAll('.view-btn');
-        viewBtns.forEach(btn => {
-            btn.addEventListener('click', (e) => {
-                const view = e.target.closest('.view-btn').dataset.view;
-                this.toggleView(view);
-            });
-        });
-
-        // Pagination
-        const prevBtn = document.getElementById('prevPage');
-        const nextBtn = document.getElementById('nextPage');
-        
-        if (prevBtn) {
-            prevBtn.addEventListener('click', () => {
-                if (this.currentPage > 1) {
-                    this.currentPage--;
-                    this.renderChannels();
-                    this.updatePagination();
-                }
-            });
-        }
-
-        if (nextBtn) {
-            nextBtn.addEventListener('click', () => {
-                const totalPages = Math.ceil(this.filteredChannels.length / this.itemsPerPage);
-                if (this.currentPage < totalPages) {
-                    this.currentPage++;
-                    this.renderChannels();
-                    this.updatePagination();
-                }
-            });
+        try {
+            // Handle both string and object cases
+            const policy = typeof policyStr === 'string' ? JSON.parse(policyStr) : policyStr;
+            return {
+                announced: true,
+                disabled: policy.disabled || false,
+                fee_base_msat: Number(policy.fee_base_msat) || Number(policy.base_fee) || 0,
+                fee_rate_milli_msat: Number(policy.fee_rate_milli_msat) || Number(policy.fee_rate) || 0,
+                inbound_fee_base_msat: Number(policy.inbound_fee_base_msat) || 0,
+                inbound_fee_rate_milli_msat: Number(policy.inbound_fee_rate_milli_msat) || 0,
+                min_htlc: Number(policy.min_htlc) || 0,
+                max_htlc_msat: Number(policy.max_htlc_msat) || 0,
+                time_lock_delta: Number(policy.time_lock_delta) || 0
+            };
+        } catch (e) {
+            console.warn('Error parsing policy:', e, policyStr);
+            return {
+                announced: false,
+                disabled: false,
+                fee_base_msat: 0,
+                fee_rate_milli_msat: 0,
+                inbound_fee_base_msat: 0,
+                inbound_fee_rate_milli_msat: 0,
+                min_htlc: 0,
+                max_htlc_msat: 0,
+                time_lock_delta: 0
+            };
         }
     }
 
-    applyFilters() {
-        this.filteredChannels = this.allChannels.filter(channel => {
-            // Bidirectional search logic
-            const node1Term = this.node1SearchTerm.toLowerCase();
-            const node2Term = this.node2SearchTerm.toLowerCase();
-            
-            // Helper function to check if a search term matches either node
-            const matchesNode = (searchTerm, node1Data, node2Data, node1Pub, node2Pub) => {
-                if (!searchTerm) return true; // Empty search = match all
-                
-                return (
-                    (node1Data || '').toLowerCase().includes(searchTerm) ||
-                    (node1Pub || '').toLowerCase().includes(searchTerm) ||
-                    (node2Data || '').toLowerCase().includes(searchTerm) ||
-                    (node2Pub || '').toLowerCase().includes(searchTerm)
-                );
-            };
-            
-            // Case 1: Both search boxes filled - find channels BETWEEN these two nodes
-            if (node1Term && node2Term) {
-                const node1MatchesFirst = (
-                    (channel.alias_1 || '').toLowerCase().includes(node1Term) ||
-                    (channel.node1_pub || '').toLowerCase().includes(node1Term)
-                );
-                const node1MatchesSecond = (
-                    (channel.alias_2 || '').toLowerCase().includes(node1Term) ||
-                    (channel.node2_pub || '').toLowerCase().includes(node1Term)
-                );
-                
-                const node2MatchesFirst = (
-                    (channel.alias_1 || '').toLowerCase().includes(node2Term) ||
-                    (channel.node1_pub || '').toLowerCase().includes(node2Term)
-                );
-                const node2MatchesSecond = (
-                    (channel.alias_2 || '').toLowerCase().includes(node2Term) ||
-                    (channel.node2_pub || '').toLowerCase().includes(node2Term)
-                );
-                
-                // Check bidirectional: (node1 in pos1 AND node2 in pos2) OR (node1 in pos2 AND node2 in pos1)
-                return (node1MatchesFirst && node2MatchesSecond) || (node1MatchesSecond && node2MatchesFirst);
+    formatMsat(msat) {
+        if (msat === null || msat === undefined) return '0';
+        const num = Number(msat);
+        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+        if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
+        return num.toLocaleString();
+    }
+
+    formatPPM(ppm) {
+        if (ppm === null || ppm === undefined) return '0';
+        return Number(ppm).toLocaleString();
+    }
+
+    formatFeesCompact(policy) {
+        if (!policy.announced) {
+            return '<span class="disabled-text">Unannounced</span>';
+        }
+        if (policy.disabled) {
+            return '<span class="disabled-text">Disabled</span>';
+        }
+        
+        return `
+            <div class="fee-breakdown">
+                <div class="fee-row">
+                    <span class="fee-label">Base:</span>
+                    <span class="fee-value">${this.formatMsat(policy.fee_base_msat)} msat</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Rate:</span>
+                    <span class="fee-value">${this.formatPPM(policy.fee_rate_milli_msat)} ppm</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Inbound Base:</span>
+                    <span class="fee-value">${this.formatMsat(policy.inbound_fee_base_msat)} msat</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Inbound Rate:</span>
+                    <span class="fee-value">${this.formatPPM(policy.inbound_fee_rate_milli_msat)} ppm</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Min HTLC:</span>
+                    <span class="fee-value">${this.formatMsat(policy.min_htlc)} msat</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Max HTLC:</span>
+                    <span class="fee-value">${this.formatMsat(policy.max_htlc_msat)} msat</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Timelock Δ:</span>
+                    <span class="fee-value">${policy.time_lock_delta || 0}</span>
+                </div>
+            </div>
+        `;
+    }
+
+    getStatus(node1Policy, node2Policy) {
+        const node1Status = !node1Policy.announced ? 'Not Announced' : (node1Policy.disabled ? 'Disabled' : 'Active');
+        const node2Status = !node2Policy.announced ? 'Not Announced' : (node2Policy.disabled ? 'Disabled' : 'Active');
+        return `Node 1: ${node1Status} | Node 2: ${node2Status}`;
+    }
+
+    filterData() {
+        const node1SearchInput = document.getElementById('node1SearchInput');
+        const node2SearchInput = document.getElementById('node2SearchInput');
+        const node1SearchTerm = node1SearchInput ? node1SearchInput.value.toLowerCase() : '';
+        const node2SearchTerm = node2SearchInput ? node2SearchInput.value.toLowerCase() : '';
+
+        let filtered = this.allChannels;
+        if (node1SearchTerm) {
+            filtered = filtered.filter(channel =>
+                (channel.alias_1 || '').toLowerCase().includes(node1SearchTerm) ||
+                (channel.node1_pub || '').toLowerCase().includes(node1SearchTerm)
+            );
+        }
+        if (node2SearchTerm) {
+            filtered = filtered.filter(channel =>
+                (channel.alias_2 || '').toLowerCase().includes(node2SearchTerm) ||
+                (channel.node2_pub || '').toLowerCase().includes(node2SearchTerm)
+            );
+        }
+        this.filteredChannels = filtered;
+
+        this.currentPage = 1;
+        this.renderTable();
+    }
+
+    resetFilters() {
+        const node1SearchInput = document.getElementById('node1SearchInput');
+        const node2SearchInput = document.getElementById('node2SearchInput');
+        if (node1SearchInput) node1SearchInput.value = '';
+        if (node2SearchInput) node2SearchInput.value = '';
+        this.filteredChannels = [...this.allChannels];
+        this.currentPage = 1;
+        this.sortColumn = null;
+        this.sortDirection = 'asc';
+        this.renderTable();
+    }
+
+    sortData(column) {
+        // Skip sorting for non-sortable columns
+        const nonSortableColumns = ['peer', 'node1_fees', 'node2_fees'];
+        if (nonSortableColumns.includes(column)) return;
+
+        if (this.sortColumn === column) {
+            this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
+        } else {
+            this.sortColumn = column;
+            this.sortDirection = 'asc';
+        }
+
+        const multiplier = this.sortDirection === 'asc' ? 1 : -1;
+
+        // Numeric columns
+        const numericColumns = ['capacity'];
+
+        this.filteredChannels.sort((a, b) => {
+            let aVal = a[column];
+            let bVal = b[column];
+
+            // Handle null/undefined values
+            if (aVal === null || aVal === undefined) return 1 * multiplier;
+            if (bVal === null || bVal === undefined) return -1 * multiplier;
+
+            if (numericColumns.includes(column)) {
+                return (Number(aVal) - Number(bVal)) * multiplier;
             }
-            
-            // Case 2: Only Node 1 search filled - show ALL channels involving this node
-            if (node1Term) {
-                return matchesNode(
-                    node1Term,
-                    channel.alias_1,
-                    channel.alias_2,
-                    channel.node1_pub,
-                    channel.node2_pub
-                );
+
+            // For birth_tx, sort as string
+            if (column === 'birth_tx') {
+                aVal = String(aVal);
+                bVal = String(bVal);
+                return aVal.localeCompare(bVal) * multiplier;
             }
-            
-            // Case 3: Only Node 2 search filled - show ALL channels involving this node
-            if (node2Term) {
-                return matchesNode(
-                    node2Term,
-                    channel.alias_1,
-                    channel.alias_2,
-                    channel.node1_pub,
-                    channel.node2_pub
-                );
+
+            // For status, sort by my status then peer
+            if (column === 'status') {
+                const getStatusPriority = (statusStr) => {
+                    if (statusStr.includes('Active')) return 2;
+                    if (statusStr.includes('Not Announced')) return 1;
+                    return 0; // Disabled
+                };
+                const aMy = getStatusPriority(aVal.split(' | ')[0]);
+                const bMy = getStatusPriority(bVal.split(' | ')[0]);
+                if (aMy !== bMy) return (aMy - bMy) * multiplier;
+                const aPeer = getStatusPriority(aVal.split(' | ')[1]);
+                const bPeer = getStatusPriority(bVal.split(' | ')[1]);
+                return (aPeer - bPeer) * multiplier;
             }
-            
-            // Case 4: Both empty - show all channels
-            return true;
+
+            return 0;
         });
 
         this.currentPage = 1;
-        this.sortChannels();
-        this.renderChannels();
-        this.updatePagination();
+        this.renderTable();
+        this.updateSortIndicators(column);
+    }
+    
+    updateSortIndicators(column) {
+        document.querySelectorAll('th').forEach(th => {
+            th.classList.remove('sort-asc', 'sort-desc');
+        });
+        
+        const th = document.querySelector(`th[data-column="${column}"]`);
+        if (th) {
+            th.classList.add(`sort-${this.sortDirection}`);
+        }
+    }
+
+    renderTable() {
+        if (this.allChannels.length === 0) return;
+        
+        const table = document.getElementById('channelTable');
+        const thead = document.getElementById('tableHead');
+        const tbody = document.getElementById('tableBody');
+        
+        if (!table || !thead || !tbody) return;
+        
+        // Define tooltips for technical columns
+        const columnTooltips = {
+            'node1_fees': 'Fees charged by this node for routing',
+            'node2_fees': 'Fees charged by the peer node for routing',
+            'status': 'Channel status from each node\'s perspective'
+        };
+        
+        thead.innerHTML = '';
+        const headerRow = document.createElement('tr');
+        
+        this.visibleColumns.forEach(column => {
+            const th = document.createElement('th');
+            const shortLabel = this.getShortHeaderLabel(column);
+            
+            if (columnTooltips[column]) {
+                th.innerHTML = `
+                    <span class="column-header-wrapper" title="${columnTooltips[column]}">
+                        ${shortLabel}
+                        <i class="fas fa-info-circle column-info-icon"></i>
+                    </span>
+                `;
+                th.title = columnTooltips[column];
+            } else {
+                th.innerHTML = shortLabel;
+            }
+            
+            th.dataset.column = column;
+            
+            // Only add sorting for sortable columns
+            const nonSortableColumns = ['peer', 'node1_fees', 'node2_fees'];
+            if (!nonSortableColumns.includes(column)) {
+                th.classList.add('sortable');
+                th.addEventListener('click', () => this.sortData(column));
+            }
+            
+            headerRow.appendChild(th);
+        });
+        
+        thead.appendChild(headerRow);
+        
+        tbody.innerHTML = '';
+        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
+        const endIndex = startIndex + this.itemsPerPage;
+        const pageChannels = this.filteredChannels.slice(startIndex, endIndex);
+        
+        pageChannels.forEach(channel => {
+            const tr = document.createElement('tr');
+            
+            this.visibleColumns.forEach(key => {
+                const value = channel[key];
+                const td = document.createElement('td');
+
+                if (key === 'peer') {
+                    const alias1 = channel.alias_1 || 'Unknown';
+                    const alias2 = channel.alias_2 || 'Unknown';
+                    const pubkey1 = channel.node1_pub;
+                    const pubkey2 = channel.node2_pub;
+                    td.innerHTML = `
+                        <span class="peer-aliases">
+                            ${pubkey1 ? `<a href="profile.html?node=${encodeURIComponent(pubkey1)}" class="alias-link" title="View ${alias1}'s profile">${alias1}</a>` : alias1}
+                            ↔
+                            ${pubkey2 ? `<a href="profile.html?node=${encodeURIComponent(pubkey2)}" class="alias-link" title="View ${alias2}'s profile">${alias2}</a>` : alias2}
+                        </span>
+                    `;
+                } else if (key === 'capacity') {
+                    td.textContent = this.formatCapacity(value);
+                } else if (key === 'birth_tx') {
+                    const channelId = channel.channel_id;
+                    if (channelId) {
+                        td.innerHTML = `<a href="https://mempool.space/lightning/channel/${channelId}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${value || 'N/A'}</a>`;
+                    } else {
+                        td.textContent = value || 'N/A';
+                    }
+                } else if (key === 'node1_fees') {
+                    td.innerHTML = this.formatFeesCompact(channel.node1_policy_parsed);
+                } else if (key === 'node2_fees') {
+                    td.innerHTML = this.formatFeesCompact(channel.node2_policy_parsed);
+                } else {
+                    td.textContent = value || '-';
+                }
+                tr.appendChild(td);
+            });
+            tbody.appendChild(tr);
+        });
+        
+        table.style.display = 'table';
+        this.updatePaginationControls();
         this.updateFilterStats();
+    }
+
+    getShortHeaderLabel(column) {
+        switch (column) {
+            case 'peer':
+                return 'PEER';
+            case 'capacity':
+                return 'CAPACITY';
+            case 'birth_tx':
+                return 'BIRTH TX';
+            case 'node1_fees':
+                return 'NODE 1<br>FEES';
+            case 'node2_fees':
+                return 'NODE 2<br>FEES';
+            case 'status':
+                return 'STATUS';
+            default:
+                return column.toUpperCase().replace(/_/g, ' ');
+        }
+    }
+
+    formatCapacity(value) {
+        if (value === null || value === undefined) return '-';
+        const capacity = Number(value);
+        if (Number.isNaN(capacity)) return '-';
+
+        if (capacity < 1_000_000) {
+            // < 1M sats -> k sats
+            return `${(capacity / 1_000).toLocaleString(undefined, { maximumFractionDigits: 0 })}k sats`;
+        } else if (capacity < 100_000_000) {
+            // < 100M sats -> m sats
+            return `${(capacity / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 0 })}m sats`;
+        } else {
+            // >= 100M sats -> bitcoin
+            const btc = capacity / 100_000_000;
+            if (btc >= 10) {
+                return `${btc.toLocaleString(undefined, { maximumFractionDigits: 0 })} bitcoin`;
+            } else {
+                return `${btc.toLocaleString(undefined, { maximumFractionDigits: 1 })} bitcoin`;
+            }
+        }
+    }
+    
+    updatePaginationControls() {
+        const totalPages = Math.ceil(this.filteredChannels.length / this.itemsPerPage);
+        const prevBtn = document.getElementById('prevPage');
+        const nextBtn = document.getElementById('nextPage');
+        const pageNumbers = document.getElementById('pageNumbers');
+        const paginationInfo = document.getElementById('paginationText');
+        
+        if (!prevBtn || !nextBtn || !pageNumbers || !paginationInfo) return;
+        
+        prevBtn.disabled = this.currentPage <= 1;
+        nextBtn.disabled = this.currentPage >= totalPages;
+        
+        const startItem = this.filteredChannels.length === 0 ? 0 : (this.currentPage - 1) * this.itemsPerPage + 1;
+        const endItem = Math.min(this.currentPage * this.itemsPerPage, this.filteredChannels.length);
+        paginationInfo.textContent = `Showing ${startItem}-${endItem} of ${this.filteredChannels.length.toLocaleString()} channels`;
+        
+        pageNumbers.innerHTML = '';
+        
+        if (totalPages <= 1) return;
+        
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        if (endPage - startPage < maxVisiblePages - 1) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            const pageLink = document.createElement('a');
+            pageLink.href = '#';
+            pageLink.textContent = i;
+            pageLink.classList.add('page-number');
+            if (i === this.currentPage) {
+                pageLink.classList.add('active');
+            }
+            pageLink.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.currentPage = i;
+                this.renderTable();
+            });
+            pageNumbers.appendChild(pageLink);
+        }
     }
 
     updateFilterStats() {
@@ -211,250 +560,23 @@ class ChannelExplorerManager {
             const filtered = this.filteredChannels.length;
             const percentage = ((filtered / total) * 100).toFixed(1);
             
-            let contextMessage = '';
-            if (this.node1SearchTerm && this.node2SearchTerm) {
-                contextMessage = ` • Showing channels between these nodes`;
-            } else if (this.node1SearchTerm || this.node2SearchTerm) {
-                const searchTerm = this.node1SearchTerm || this.node2SearchTerm;
-                contextMessage = ` • Showing all channels involving "${searchTerm}"`;
-            }
-            
-            statsElement.textContent = `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} channels (${percentage}%)${contextMessage}`;
+            statsElement.textContent = `Showing ${filtered.toLocaleString()} of ${total.toLocaleString()} channels (${percentage}%)`;
         }
     }
-
-    sortChannels() {
-        this.filteredChannels.sort((a, b) => {
-            let sortField = this.currentSort;
-            let sortDirection = 'desc'; // Default for capacity
-            
-            if (this.currentSort.includes(':')) {
-                [sortField, sortDirection] = this.currentSort.split(':');
-            }
-            
-            let aVal = a[sortField];
-            let bVal = b[sortField];
-
-            // Handle null/undefined values
-            if (aVal === null || aVal === undefined) return 1;
-            if (bVal === null || bVal === undefined) return -1;
-
-            let comparison = 0;
-
-            if (sortField === 'birth_tx') {
-                comparison = String(aVal).localeCompare(String(bVal));
-            } else if (sortField === 'capacity') {
-                comparison = Number(aVal) - Number(bVal);
-            }
-
-            return sortDirection === 'desc' ? -comparison : comparison;
-        });
-    }
-
-    resetFilters() {
-        this.node1SearchTerm = '';
-        this.node2SearchTerm = '';
-        this.currentSort = 'capacity:desc';
-        this.currentPage = 1;
-
-        const node1SearchInput = document.getElementById('node1SearchInput');
-        if (node1SearchInput) node1SearchInput.value = '';
-        
-        const node2SearchInput = document.getElementById('node2SearchInput');
-        if (node2SearchInput) node2SearchInput.value = '';
-        
-        const sortBy = document.getElementById('sortBy');
-        if (sortBy) sortBy.value = 'capacity:desc';
-
-        this.filteredChannels = [...this.allChannels];
-        this.sortChannels();
-        this.renderChannels();
-        this.updatePagination();
-        this.updateFilterStats();
-    }
-
-    toggleView(view) {
-        this.currentView = view;
-        
-        document.querySelectorAll('.view-btn').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        const activeBtn = document.querySelector(`[data-view="${view}"]`);
-        if (activeBtn) activeBtn.classList.add('active');
-
+    
+    hideLoading() {
+        const loading = document.getElementById('loadingState');
+        if (loading) loading.style.display = 'none';
         const container = document.getElementById('channelExplorerContainer');
-        if (container) {
-            container.className = `node-explorer-container ${view}-view`;
-        }
-
-        this.renderChannels();
+        if (container) container.style.display = 'block';
+        const pagination = document.getElementById('paginationContainer');
+        if (pagination) pagination.style.display = 'flex';
     }
-
-    renderChannels() {
-        const grid = document.getElementById('channelExplorerGrid');
-        if (!grid) return;
-
-        const startIndex = (this.currentPage - 1) * this.itemsPerPage;
-        const endIndex = startIndex + this.itemsPerPage;
-        const pageChannels = this.filteredChannels.slice(startIndex, endIndex);
-
-        grid.innerHTML = pageChannels.map((channel, index) => {
-            const globalRank = startIndex + index + 1;
-            return this.createChannelCard(channel, globalRank);
-        }).join('');
-
-        this.updatePagination();
-    }
-
-    createChannelCard(channel, rank) {
-        const alias1 = channel.alias_1 || 'Unknown Node';
-        const alias2 = channel.alias_2 || 'Unknown Node';
-        const capacity = this.formatCapacity(channel.capacity);
-        const shortId = channel.birth_tx || 'N/A';
-        const avgFeeRate = this.getAverageFeeRate(channel);
-        const birthTxLink = channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${shortId}</a>` : shortId;
-
-        if (this.currentView === 'list') {
-            return `
-                <div class="node-card list-item">
-                    <div class="node-info">
-                        <div class="node-alias">${alias1} ↔ ${alias2}</div>
-                        <div class="node-type">Birth TX: ${birthTxLink}</div>
-                    </div>
-                    <div class="node-metrics">
-                        <div class="metric">
-                            <span class="metric-label">Capacity</span>
-                            <span class="metric-value">${capacity}</span>
-                        </div>
-                        <div class="metric">
-                            <span class="metric-label">Avg Fee Rate</span>
-                            <span class="metric-value">${avgFeeRate} ppm</span>
-                        </div>
-                    </div>
-                </div>
-            `;
-        }
-
-        return `
-            <div class="node-card grid-item">
-                <div class="node-header">
-                    <div class="node-alias">${alias1}</div>
-                    <div class="node-type">
-                        <i class="fas fa-arrows-alt-h"></i>
-                        ↔
-                    </div>
-                    <div class="node-alias">${alias2}</div>
-                </div>
-                <div class="node-stats">
-                    <div class="node-stat">
-                        <div class="stat-value">${capacity}</div>
-                        <div class="stat-name">Capacity</div>
-                    </div>
-                    <div class="node-stat">
-                        <div class="stat-value">${birthTxLink}</div>
-                        <div class="stat-name">Birth TX</div>
-                    </div>
-                    <div class="node-stat">
-                        <div class="stat-value">${avgFeeRate} ppm</div>
-                        <div class="stat-name">Avg Fee Rate</div>
-                    </div>
-                </div>
-            </div>
-        `;
-    }
-
-    getAverageFeeRate(channel) {
-        let rates = [];
-        
-        if (channel.node1_policy && typeof channel.node1_policy === 'object' && channel.node1_policy.fee_rate) {
-            rates.push(Number(channel.node1_policy.fee_rate));
-        }
-        if (channel.node2_policy && typeof channel.node2_policy === 'object' && channel.node2_policy.fee_rate) {
-            rates.push(Number(channel.node2_policy.fee_rate));
-        }
-        
-        if (rates.length === 0) return 'N/A';
-        
-        const avg = rates.reduce((a, b) => a + b, 0) / rates.length;
-        return Math.round(avg);
-    }
-
-    updatePagination() {
-        const totalPages = Math.ceil(this.filteredChannels.length / this.itemsPerPage);
-        const startItem = this.filteredChannels.length === 0 ? 0 : (this.currentPage - 1) * this.itemsPerPage + 1;
-        const endItem = Math.min(this.currentPage * this.itemsPerPage, this.filteredChannels.length);
-
-        const paginationText = document.getElementById('paginationText');
-        if (paginationText) {
-            paginationText.textContent = `Showing ${startItem}-${endItem} of ${this.filteredChannels.length.toLocaleString()} channels`;
-        }
-
-        const prevBtn = document.getElementById('prevPage');
-        const nextBtn = document.getElementById('nextPage');
-        
-        if (prevBtn) prevBtn.disabled = this.currentPage <= 1;
-        if (nextBtn) nextBtn.disabled = this.currentPage >= totalPages;
-
-        this.updatePageNumbers(totalPages);
-    }
-
-    updatePageNumbers(totalPages) {
-        const pageNumbers = document.getElementById('pageNumbers');
-        if (!pageNumbers) return;
-
-        pageNumbers.innerHTML = '';
-
-        if (totalPages <= 1) return;
-
-        const maxVisiblePages = 5;
-        let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
-        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
-
-        if (endPage - startPage < maxVisiblePages - 1) {
-            startPage = Math.max(1, endPage - maxVisiblePages + 1);
-        }
-
-        for (let i = startPage; i <= endPage; i++) {
-            const pageLink = document.createElement('a');
-            pageLink.href = '#';
-            pageLink.className = `page-number ${i === this.currentPage ? 'active' : ''}`;
-            pageLink.textContent = i;
-            pageLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.currentPage = i;
-                this.renderChannels();
-                this.updatePagination();
-            });
-            pageNumbers.appendChild(pageLink);
-        }
-    }
-
-    formatCapacity(capacity) {
-        if (!capacity) return '0';
-        const num = Number(capacity);
-        if (num >= 100000000) { // 1 BTC
-            return `${(num / 100000000).toFixed(1)} BTC`;
-        } else if (num >= 1000000) {
-            return `${(num / 1000000).toFixed(1)}M sats`;
-        } else if (num >= 1000) {
-            return `${(num / 1000).toFixed(1)}K sats`;
-        }
-        return `${num.toLocaleString()} sats`;
-    }
-
-    showContent() {
-        const loadingState = document.getElementById('loadingState');
-        if (loadingState) loadingState.style.display = 'none';
-        const explorerContainer = document.getElementById('channelExplorerContainer');
-        if (explorerContainer) explorerContainer.style.display = 'block';
-        const paginationContainer = document.getElementById('paginationContainer');
-        if (paginationContainer) paginationContainer.style.display = 'flex';
-    }
-
+    
     showError(message) {
-        const loadingState = document.getElementById('loadingState');
-        if (loadingState) {
-            loadingState.innerHTML = `
+        const loading = document.getElementById('loadingState');
+        if (loading) {
+            loading.innerHTML = `
                 <div class="loading-content">
                     <i class="fas fa-exclamation-triangle" style="color: #dc3545;"></i>
                     <p>${message}</p>
