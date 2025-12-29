@@ -107,9 +107,9 @@ class NodeProfileManager {
 
     getProfileColumns() {
         return [
-            'pub_key', 'alias', 'address_1', 'address_2', 'last_seen', 'source', 'update_dt', 'snapshot_date', 
+            'pub_key', 'alias', 'address_1', 'address_2', 'last_seen', 'source', 'snapshot_date', 'update_dt', 
             'closed_channels_count', 'node_type', 'birth_tx', 
-            'birth_chan', 'birth_tx_active', 'birth_chan_active', 'first_seen_week', 'total_channels', 'channel_segment', 'category_counts', 'total_capacity', 
+            'birth_chan', 'birth_tx_active', 'birth_chan_active', 'first_seen_week', 'in_latest_gossip', 'total_channels', 'channel_segment', 'category_counts', 'total_capacity', 
             'node_cap_tier', 'capacity_segment', 'avg_chnl_size', 'med_chnl_size', 'mode_chnl_size', 'min_chnl_size', 'max_chnl_size', 
             'betweenness_centrality_rank', 'eigenvector_centrality_rank', 'custom_pagerank_rank', 'capacity_weighted_degree_rank', 
             'total_channels_rank', 'total_capacity_rank', 'pleb_rank', 'ftotal_capacity', 'avg_base_fee', 'med_base_fee', 'max_base_fee',
@@ -162,7 +162,7 @@ class NodeProfileManager {
         if (birthTxEl) {
             if (node.birth_chan) {
                 const chanId = node.birth_chan;
-                birthTxEl.innerHTML = `<a href="https://mempool.space/lightning/channel/${chanId}" target="_blank" rel="noopener noreferrer">${node.birth_tx || chanId}</a>`;
+                birthTxEl.innerHTML = `<a href="https://mempool.space/lightning/channel/${chanId}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${node.birth_tx || chanId}</a>`;
             } else {
                 birthTxEl.textContent = node.birth_tx || '-';
             }
@@ -220,7 +220,9 @@ class NodeProfileManager {
     formatCapacity(capacity) {
         if (!capacity || capacity === null || capacity === undefined) return 'N/A';
         const num = Number(capacity);
-        if (num >= 1000000) {
+        if (num >= 100000000) { // 1 BTC
+            return `${(num / 100000000).toFixed(1)} BTC`;
+        } else if (num >= 1000000) {
             return `${(num / 1000000).toFixed(0)}M sats`;
         } else if (num >= 1000) {
             return `${(num / 1000).toFixed(0)}K sats`;

@@ -33,7 +33,7 @@ class ChannelExplorerManager {
                 file: arrayBuffer,
                 onComplete: (result) => {
                     const columns = [
-                        'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 'alias_1', 'alias_2', 'birth_tx'
+                        'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 'alias_1', 'alias_2', 'birth_tx', 'channel_id', 'in_latest_gossip'
                     ];
                     
                     if (Array.isArray(result) && result.length > 0) {
@@ -312,13 +312,14 @@ class ChannelExplorerManager {
         const capacity = this.formatCapacity(channel.capacity);
         const shortId = channel.birth_tx || 'N/A';
         const avgFeeRate = this.getAverageFeeRate(channel);
+        const birthTxLink = channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${shortId}</a>` : shortId;
 
         if (this.currentView === 'list') {
             return `
                 <div class="node-card list-item">
                     <div class="node-info">
                         <div class="node-alias">${alias1} ↔ ${alias2}</div>
-                        <div class="node-type">Birth TX: ${shortId}</div>
+                        <div class="node-type">Birth TX: ${birthTxLink}</div>
                     </div>
                     <div class="node-metrics">
                         <div class="metric">
@@ -350,7 +351,7 @@ class ChannelExplorerManager {
                         <div class="stat-name">Capacity</div>
                     </div>
                     <div class="node-stat">
-                        <div class="stat-value">${shortId}</div>
+                        <div class="stat-value">${birthTxLink}</div>
                         <div class="stat-name">Birth TX</div>
                     </div>
                     <div class="node-stat">
@@ -431,8 +432,8 @@ class ChannelExplorerManager {
     formatCapacity(capacity) {
         if (!capacity) return '0';
         const num = Number(capacity);
-        if (num >= 1000000000) {
-            return `${(num / 1000000000).toFixed(1)}B sats`;
+        if (num >= 100000000) { // 1 BTC
+            return `${(num / 100000000).toFixed(1)} BTC`;
         } else if (num >= 1000000) {
             return `${(num / 1000000).toFixed(1)}M sats`;
         } else if (num >= 1000) {

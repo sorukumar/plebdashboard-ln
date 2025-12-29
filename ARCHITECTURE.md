@@ -8,13 +8,15 @@ ln-nodeprofile-rank/
 ├── index.html
 ├── prank.html
 ├── profile.html
-├── trending.html
+├── channel-explorer.html
+├── node-explorer.html
 ├── README.md
 │
 ├── data/
 │   ├── node_feature.parquet
 │   ├── node_profile.parquet
 │   ├── node_rank.parquet
+│   ├── channel_profile.parquet
 │   └── featured_node.json
 │
 ├── scripts/
@@ -23,13 +25,15 @@ ln-nodeprofile-rank/
 │   ├── profile-channels.js
 │   ├── profile-channels-table.js
 │   ├── table.js
-│   └── trending.js
+│   ├── node-explorer.js
+│   └── channel-explorer.js
 │
 └── styles/
     ├── main.css
     ├── profile.css
     ├── table.css
-    └── trending.css
+    ├── node-explorer.css
+    └── components.css
 ```
 
 ---
@@ -44,8 +48,10 @@ ln-nodeprofile-rank/
   Rankings table: search, sort, filter, paginate. Table updates live. All logic in table.js.
 - **profile.html**  
   Node profile: stats, rankings, metrics, tabs (Overview, Rankings, Channels, Channel Details), copy pubkey, all dynamic. Uses profile.js, profile-channels.js, profile-channels-table.js.
-- **trending.html**  
-  Node Explorer: advanced search, filter, sort, grid/list view, pagination. All logic in trending.js.
+- **channel-explorer.html**  
+  Channel Explorer: advanced search, filter, sort, grid/list view, pagination. All logic in channel-explorer.js.
+- **node-explorer.html**  
+  Node Explorer: advanced search, filter, sort, grid/list view, pagination. All logic in node-explorer.js.
 - **README.md**  
   Project setup, usage, docs.
 
@@ -55,21 +61,26 @@ ln-nodeprofile-rank/
 
 - **node_feature.parquet**  
   Parquet file containing node features.  
-  _Columns (typical):_  
-  - pub_key, alias, node_type, total_capacity, num_channels, last_seen, ... (plus various feature columns)
+  _Columns:_  
+  - pub_key, alias, source, features_dict
 
 - **node_profile.parquet**  
   Parquet file with detailed node profiles.  
   _Columns:_  
-  - pub_key, alias, node_type, total_capacity, num_channels, last_seen, pleb_rank, capacity_rank, channels_rank, weighted_degree_rank, betweenness_rank, eigenvector_rank, pagerank
+  - pub_key, alias, address_1, address_2, last_seen, source, snapshot_date, update_dt, closed_channels_count, node_type, birth_tx, birth_chan, birth_tx_active, birth_chan_active, first_seen_week, in_latest_gossip, total_channels, channel_segment, category_counts, total_capacity, node_cap_tier, capacity_segment, avg_chnl_size, med_chnl_size, mode_chnl_size, min_chnl_size, max_chnl_size, betweenness_centrality_rank, eigenvector_centrality_rank, custom_pagerank_rank, capacity_weighted_degree_rank, total_channels_rank, total_capacity_rank, pleb_rank, ftotal_capacity, avg_base_fee, med_base_fee, max_base_fee, min_base_fee, avg_fee_rate, med_fee_rate, max_fee_rate, min_fee_rate
 
 - **node_rank.parquet**  
   Parquet file with node rankings and summary stats.  
   _Columns:_  
-  - pleb_rank, channels_rank, capacity_rank, weighted_degree_rank, betweenness_rank, eigenvector_rank, pagerank, alias, node_type, total_capacity, num_channels, last_seen, pub_key
+  - pleb_rank, total_channels_rank, total_capacity_rank, capacity_weighted_degree_rank, betweenness_centrality_rank, eigenvector_centrality_rank, custom_pagerank_rank, alias, node_type, total_capacity, total_channels, last_seen, pub_key, ftotal_capacity
 
 - **featured_node.json**  
   JSON file containing featured node(s) for homepage highlights or special display.
+
+- **channel_profile.parquet**  
+  Parquet file with channel profiles.  
+  _Columns:_  
+  - node1_pub, node2_pub, capacity, node1_policy, node2_policy, alias_1, alias_2, birth_tx, channel_id, in_latest_gossip
 
 ---
 
@@ -85,8 +96,10 @@ ln-nodeprofile-rank/
   Render channel table: sort, filter, paginate, format (fees, HTLC, status), table events.
 - **table.js**  
   Rankings table: load data, render, sort, filter, paginate, search, loading/error UI.
-- **trending.js**  
+- **node-explorer.js**  
   Node Explorer: load/filter/sort nodes, advanced filters, search, grid/list, pagination, render node cards, all UI events.
+- **channel-explorer.js**  
+  Channel Explorer: load/filter/sort channels, advanced filters, search, grid/list, pagination, render channel cards, all UI events.
 
 ---
 
@@ -101,14 +114,12 @@ ln-nodeprofile-rank/
 - **table.css**  
   Styles for the rankings table.
 
-- **trending.css**  
-  Styles for the trending nodes page.
+- **node-explorer.css**  
+  Styles for the node explorer page.
 
-components.css → Reusable UI components
-main.css → Homepage & hero styles
-table.css → Data table styles
-profile.css → Profile page styles
-trending.css → Node explorer styles
+- **components.css**  
+  Reusable UI components.
+
 ---
 
 ## Program Call Graph
@@ -127,9 +138,14 @@ trending.css → Node explorer styles
   → `table.js`  
     - Loads and displays node rankings table
 
-- **trending.html**  
-  → `trending.js`  
-    - Loads trending nodes  
+- **node-explorer.html**  
+  → `node-explorer.js`  
+    - Loads node data  
+    - Handles filtering, sorting, pagination
+
+- **channel-explorer.html**  
+  → `channel-explorer.js`  
+    - Loads channel data  
     - Handles filtering, sorting, pagination
 
 ---
@@ -137,13 +153,16 @@ trending.css → Node explorer styles
 ## Data File Columns
 
 - **node_feature.parquet**  
-  - pub_key, alias, node_type, total_capacity, num_channels, last_seen, ... (plus feature columns)
+  - pub_key, alias, source, features_dict
 
 - **node_profile.parquet**  
-  - pub_key, alias, node_type, total_capacity, num_channels, last_seen, pleb_rank, capacity_rank, channels_rank, weighted_degree_rank, betweenness_rank, eigenvector_rank, pagerank
+  - pub_key, alias, address_1, address_2, last_seen, source, snapshot_date, update_dt, closed_channels_count, node_type, birth_tx, birth_chan, birth_tx_active, birth_chan_active, first_seen_week, in_latest_gossip, total_channels, channel_segment, category_counts, total_capacity, node_cap_tier, capacity_segment, avg_chnl_size, med_chnl_size, mode_chnl_size, min_chnl_size, max_chnl_size, betweenness_centrality_rank, eigenvector_centrality_rank, custom_pagerank_rank, capacity_weighted_degree_rank, total_channels_rank, total_capacity_rank, pleb_rank, ftotal_capacity, avg_base_fee, med_base_fee, max_base_fee, min_base_fee, avg_fee_rate, med_fee_rate, max_fee_rate, min_fee_rate
 
 - **node_rank.parquet**  
-  - pleb_rank, channels_rank, capacity_rank, weighted_degree_rank, betweenness_rank, eigenvector_rank, pagerank, alias, node_type, total_capacity, num_channels, last_seen, pub_key
+  - pleb_rank, total_channels_rank, total_capacity_rank, capacity_weighted_degree_rank, betweenness_centrality_rank, eigenvector_centrality_rank, custom_pagerank_rank, alias, node_type, total_capacity, total_channels, last_seen, pub_key, ftotal_capacity
+
+- **channel_profile.parquet**  
+  - node1_pub, node2_pub, capacity, node1_policy, node2_policy, alias_1, alias_2, birth_tx, channel_id, in_latest_gossip
 
 ---
 
@@ -158,7 +177,9 @@ trending.css → Node explorer styles
   ↓
 [prank.html] --(table view)--> [table.js] --(fetch)--> [node_rank.parquet]
   ↓
-[trending.html] --(trending view)--> [trending.js] --(fetch)--> [node_rank.parquet]
+[node-explorer.html] --(node explorer view)--> [node-explorer.js] --(fetch)--> [node_rank.parquet]
+  ↓
+[channel-explorer.html] --(channel explorer view)--> [channel-explorer.js] --(fetch)--> [channel_profile.parquet]
 ```
 
 - All JS files fetch data from the `/data/` directory.
@@ -196,19 +217,7 @@ trending.css → Node explorer styles
 | total_channels               | int64     | Total number of channels                                           |
 | last_seen                    | object    | Last seen date/time (string or timestamp)                          |
 | pub_key                      | object    | Node public key (unique identifier)                                |
-| alias/pubkey                 | object    | Alias or pubkey (for search/fallback)                              |
-
----
-
-## prank.parquet
-
-
-| Column Name           | Data Type | Description                                 |
-|----------------------|-----------|---------------------------------------------|
-| pleb_rank            | int32     | Composite rank for node (lower is better)   |
-| total_channels_rank  | int32     | Rank by total channels                      |
-| total_capacity_rank  | int32     | Rank by total capacity                      |
-| alias/pubkey         | object    | Alias or pubkey (for search/fallback)       |
+| ftotal_capacity              | object    | Formatted total capacity (e.g., '90m sats')                        |
 
 ---
 
@@ -222,8 +231,8 @@ trending.css → Node explorer styles
 | address_2                       | object    | Node address (part 2)                            |
 | last_seen                       | object    | Last seen date (YYYY-MM or string)               |
 | source                          | uint64    | Data source identifier                           |
-| update_dt                       | object    | Last update datetime (string)                    |
 | snapshot_date                   | object    | Date of data snapshot                            |
+| update_dt                       | object    | Last update datetime (string)                    |
 | closed_channels_count           | int64     | Number of closed channels                        |
 | node_type                       | object    | Node type (e.g., routing, merchant, etc.)        |
 | birth_tx                        | object    | Birth tx (first time node was seen)                   |
@@ -231,6 +240,7 @@ trending.css → Node explorer styles
 | birth_tx_active                 | object    | Birthtx (1sttime node was seen-active chnl)          |
 | birth_chan_active               | object    | Channel ID of node's active birth                |
 | first_seen_week                 | object    | First seen week (string)                         |
+| in_latest_gossip                | object    | Whether the node is in the latest gossip         |
 | total_channels                  | int64     | Total number of channels                         |
 | channel_segment                 | object    | Channel segment (categorical bin)                |
 | category_counts                 | object    | Category counts (JSON or stringified dict)       |
@@ -271,3 +281,20 @@ trending.css → Node explorer styles
 | alias         | object    | Node alias (display name)                        |
 | source        | uint64    | Data source identifier                           |
 | features_dict | object    | Dictionary of node features (JSON or stringified) |
+
+---
+
+## channel_profile.parquet
+
+| Column Name    | Data Type | Description                                      |
+|---------------|-----------|--------------------------------------------------|
+| node1_pub     | object    | Public key of node 1                             |
+| node2_pub     | object    | Public key of node 2                             |
+| capacity      | int64     | Channel capacity (satoshis)                      |
+| node1_policy  | object    | Policy for node 1 (JSON or string)               |
+| node2_policy  | object    | Policy for node 2 (JSON or string)               |
+| alias_1       | object    | Alias of node 1                                  |
+| alias_2       | object    | Alias of node 2                                  |
+| birth_tx      | object    | Birth transaction                                |
+| channel_id    | object    | Channel ID                                       |
+| in_latest_gossip | object  | Whether the channel is in the latest gossip      |

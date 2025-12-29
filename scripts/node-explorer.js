@@ -55,9 +55,9 @@ class NodeExplorerManager {
                 file: arrayBuffer,
                 onComplete: (result) => {
                     const columns = [
-                        'pub_key', 'alias', 'address_1', 'address_2', 'last_seen', 'source', 'update_dt', 'snapshot_date', 
+                        'pub_key', 'alias', 'address_1', 'address_2', 'last_seen', 'source', 'snapshot_date', 'update_dt', 
                         'closed_channels_count', 'node_type', 'birth_tx', 
-                        'birth_chan', 'birth_tx_active', 'birth_chan_active', 'first_seen_week', 'total_channels', 'channel_segment', 'category_counts', 'total_capacity', 
+                        'birth_chan', 'birth_tx_active', 'birth_chan_active', 'first_seen_week', 'in_latest_gossip', 'total_channels', 'channel_segment', 'category_counts', 'total_capacity', 
                         'node_cap_tier', 'capacity_segment', 'avg_chnl_size', 'med_chnl_size', 'mode_chnl_size', 'min_chnl_size', 'max_chnl_size', 
                         'betweenness_centrality_rank', 'eigenvector_centrality_rank', 'custom_pagerank_rank', 'capacity_weighted_degree_rank', 
                         'total_channels_rank', 'total_capacity_rank', 'pleb_rank', 'ftotal_capacity', 'avg_base_fee', 'med_base_fee', 'max_base_fee',
@@ -639,14 +639,14 @@ class NodeExplorerManager {
     formatCapacity(capacity) {
         if (!capacity) return '0';
         const num = Number(capacity);
-        if (num >= 1000000000) {
-            return `${(num / 1000000000).toFixed(1)}B`;
+        if (num >= 100000000) { // 1 BTC
+            return `${(num / 100000000).toFixed(1)} BTC`;
         } else if (num >= 1000000) {
-            return `${(num / 1000000).toFixed(1)}M`;
+            return `${(num / 1000000).toFixed(1)}M sats`;
         } else if (num >= 1000) {
-            return `${(num / 1000).toFixed(1)}K`;
+            return `${(num / 1000).toFixed(1)}K sats`;
         }
-        return num.toLocaleString();
+        return `${num.toLocaleString()} sats`;
     }
 
     showContent() {
