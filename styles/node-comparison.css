@@ -9,6 +9,20 @@
     padding: 0 1rem;
 }
 
+/* Hero Controls - Make search boxes prominent */
+.controls-row-unified.controls-hero {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 1.5rem;
+    background: var(--bg-secondary);
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    flex-wrap: wrap;
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+}
+
 /* Unified Controls Row - All primary controls on one line */
 .controls-row-unified {
     display: flex;
@@ -48,17 +62,76 @@
     min-width: auto;
 }
 
+/* Controls helper text */
+.controls-helper {
+    text-align: center;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    margin: 0;
+    padding: 0 1rem;
+}
+
+/* Example Chips */
+.example-chips {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    padding: 0 1rem;
+}
+
+.example-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 500;
+    margin-right: 0.25rem;
+}
+
+.example-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.875rem;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.example-chip:hover {
+    background: var(--primary);
+    color: white;
+    border-color: var(--primary);
+    transform: translateY(-1px);
+    box-shadow: 0 2px 8px rgba(255, 152, 0, 0.25);
+}
+
+.example-chip:active {
+    transform: translateY(0);
+}
+
+.example-chip i {
+    font-size: 0.9rem;
+    opacity: 0.8;
+}
+
 /* Loading and Error States */
-.loading-state, .error-state {
+.loading-state, .error-state, .welcome-state {
     display: flex;
     justify-content: center;
     align-items: center;
-    min-height: 300px;
+    min-height: 200px;
     text-align: center;
+    padding: 2rem 1rem 1.5rem;
 }
 
-.loading-content, .error-content {
-    max-width: 400px;
+.loading-content, .error-content, .welcome-content-minimal {
+    max-width: 600px;
 }
 
 .loading-content i, .error-content i {
@@ -70,6 +143,59 @@
 .loading-content p, .error-content p {
     color: var(--text-secondary);
     font-size: 1.1rem;
+}
+
+/* Minimal Welcome Message */
+.welcome-content-minimal {
+    width: 100%;
+}
+
+.welcome-instruction {
+    color: var(--text-secondary);
+    font-size: 1.05rem;
+    margin: 0 0 0.75rem 0;
+    line-height: 1.6;
+    font-weight: 400;
+}
+
+/* Try Example Links - Subtle styling */
+.try-example-link {
+    display: inline-block;
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-bottom: 1px dashed var(--primary);
+}
+
+.try-example-link:hover {
+    color: var(--primary-dark, #e68900);
+    border-bottom-style: solid;
+}
+
+.try-example-link-small {
+    color: var(--primary);
+    text-decoration: none;
+    font-size: 0.875rem;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    border-bottom: 1px dashed var(--primary);
+}
+
+.try-example-link-small:hover {
+    color: var(--primary-dark, #e68900);
+    border-bottom-style: solid;
+}
+
+.helper-divider {
+    color: var(--text-secondary);
+    margin: 0 0.5rem;
+}
+
+/* Explorer Controls - Add margin when following welcome state */
+.welcome-state + .explorer-controls {
+    margin-top: 1.5rem;
 }
 
 /* Comparison Content */

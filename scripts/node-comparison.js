@@ -97,6 +97,67 @@ class NodeComparisonManager {
             compareBtn.addEventListener('click', () => this.handleCompare());
         }
 
+        // Add event listeners for "Try an Example" links - simple approach
+        ['tryExampleLink', 'tryExampleLinkBottom'].forEach(linkId => {
+            const link = document.getElementById(linkId);
+            if (link) {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    
+                    // Find example nodes and populate inputs
+                    const examples = [
+                        { alias: 'ACINQ', inputId: 'node1Input' },
+                        { alias: 'Boltz', inputId: 'node2Input' },
+                        { alias: 'LNBiG [Hub-1]', inputId: 'node3Input' }
+                    ];
+                    
+                    examples.forEach(({ alias, inputId }) => {
+                        const node = this.allNodesData.find(n => 
+                            n.alias && n.alias.toLowerCase() === alias.toLowerCase()
+                        );
+                        if (node) {
+                            const input = document.getElementById(inputId);
+                            if (input) {
+                                input.value = node.alias;
+                                input.dataset.pubkey = node.pub_key;
+                            }
+                        }
+                    });
+                    
+                    // Trigger compare button click
+                    setTimeout(() => compareBtn.click(), 100);
+                });
+            }
+        });
+
+        // Add event listeners for example chip buttons - generic handler
+        document.querySelectorAll('.example-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                e.preventDefault();
+                
+                // Get examples from data attribute
+                const exampleAliases = JSON.parse(chip.dataset.examples);
+                const inputIds = ['node1Input', 'node2Input', 'node3Input'];
+                
+                // Populate inputs with the example nodes
+                exampleAliases.forEach((alias, index) => {
+                    const node = this.allNodesData.find(n => 
+                        n.alias && n.alias.toLowerCase() === alias.toLowerCase()
+                    );
+                    if (node && inputIds[index]) {
+                        const input = document.getElementById(inputIds[index]);
+                        if (input) {
+                            input.value = node.alias;
+                            input.dataset.pubkey = node.pub_key;
+                        }
+                    }
+                });
+                
+                // Trigger compare button click
+                setTimeout(() => compareBtn.click(), 100);
+            });
+        });
+
         // Add event listeners for search inputs
         ['node1Input', 'node2Input', 'node3Input'].forEach(inputId => {
             const input = document.getElementById(inputId);
@@ -153,9 +214,14 @@ class NodeComparisonManager {
     }
 
     async handleCompare() {
-        const node1 = document.getElementById('node1Input').value.trim();
-        const node2 = document.getElementById('node2Input').value.trim();
-        const node3 = document.getElementById('node3Input').value.trim();
+        const input1 = document.getElementById('node1Input');
+        const input2 = document.getElementById('node2Input');
+        const input3 = document.getElementById('node3Input');
+
+        // Get pubkey from data attribute if available, otherwise use input value
+        const node1 = input1.dataset.pubkey || input1.value.trim();
+        const node2 = input2.dataset.pubkey || input2.value.trim();
+        const node3 = input3.dataset.pubkey || input3.value.trim();
 
         const nodeIds = [node1, node2];
         if (node3) nodeIds.push(node3);
@@ -330,8 +396,6 @@ class NodeComparisonManager {
     }
 
     renderRadarChart() {
-        console.log('renderRadarChart called, rankData length:', this.rankData.length);
-        console.log('rankData:', this.rankData);
         const chartDom = document.getElementById('radarChart');
         if (!chartDom) {
             console.error('radarChart element not found');
@@ -345,63 +409,99 @@ class NodeComparisonManager {
         
         this.radarChart = echarts.init(chartDom);
 
-        // Build indicators with just dimension names
+        // Dynamic scaling: scale based on actual ranks being compared
         const metricNames = ['Pleb Rank', 'Channels', 'Capacity', 'Weighted Degree', 'Betweenness', 'Eigenvector'];
         const metricKeys = ['pleb_rank', 'channels_rank', 'capacity_rank', 'weighted_degree_rank', 'betweenness_rank', 'eigenvector_rank'];
         
-        const indicators = metricNames.map((name, idx) => {
-            const key = metricKeys[idx];
-            const maxVal = Math.max(...this.rankData.map(n => n[key] || 0));
-            
+        // Collect all actual ranks for each dimension
+        const allRanksByDimension = metricKeys.map(key => 
+            this.rankData.map(node => node[key] || 10000)
+        );
+        
+        // Build indicators with max = 100 (percentage scale)
+        const indicators = metricNames.map((name) => {
             return {
                 name: name,
-                max: maxVal
+                max: 100  // Percentage scale for all dimensions
             };
         });
 
-        console.log('indicators:', indicators);
-
-        // Create series data with actual rank values
+        // Create series data with scaling that preserves shape differences
         const colors = ['#8BC34A', '#03A9F4', '#FFC107'];
         const seriesData = this.rankData.map((node, index) => {
-            const values = [
-                node.pleb_rank || 0,
-                node.channels_rank || 0,
-                node.capacity_rank || 0,
-                node.weighted_degree_rank || 0,
-                node.betweenness_rank || 0,
-                node.eigenvector_rank || 0
+            // Store actual ranks for display
+            const actualRanks = [
+                node.pleb_rank || 10000,
+                node.channels_rank || 10000,
+                node.capacity_rank || 10000,
+                node.weighted_degree_rank || 10000,
+                node.betweenness_rank || 10000,
+                node.eigenvector_rank || 10000
             ];
+            
+            // SIMPLE APPROACH with more aggressive scaling
+            // Lower rank = better = larger value
+            // Use logarithmic scale to make differences more dramatic
+            const values = actualRanks.map((rank) => {
+                // Use logarithmic scale to emphasize differences
+                // log(1) = 0, log(10) = 1, log(100) = 2
+                // This makes rank #1 vs #3 more different
+                // And rank #2 vs #20 MUCH more different
+                
+                // Apply log scaling
+                const logRank = Math.log10(rank);
+                const maxLogRank = Math.log10(100); // log10(100) = 2
+                
+                // Invert: better rank (lower) = higher value
+                // Scale from log space to 20-100
+                const normalizedLog = 1 - (logRank / maxLogRank); // 0 to 1, where 1 is best
+                const value = 20 + (normalizedLog * 80); // Scale to 20-100
+                
+                return Math.max(20, Math.min(100, value));
+            });
             
             return {
                 name: node.alias || `Node ${index + 1}`,
                 value: values,
+                actualRanks: actualRanks,  // Store for label display
                 lineStyle: {
-                    width: 3,
+                    width: 2.5,
                     color: colors[index]
                 },
                 areaStyle: {
-                    opacity: 0.25,
+                    opacity: 0.2,
                     color: colors[index]
                 },
                 symbol: 'circle',
-                symbolSize: 8,
+                symbolSize: 6,
                 itemStyle: {
-                    color: colors[index]
+                    color: colors[index],
+                    borderColor: '#fff',
+                    borderWidth: 1
                 },
+                // Enable clean data labels at each vertex showing actual rank
                 label: {
-                    show: false // Hide the empty label boxes
+                    show: true,
+                    position: 'top',
+                    distance: 5,
+                    formatter: (params) => {
+                        // Show actual rank number from stored data
+                        const dimIndex = params.dimensionIndex;
+                        return Math.round(actualRanks[dimIndex]);
+                    },
+                    fontSize: 11,
+                    fontWeight: 600,
+                    color: colors[index]
                 }
             };
         });
 
-        console.log('seriesData:', seriesData);
-
         const option = {
             title: {
-                text: 'Node Rankings Comparison',
-                subtext: 'Lower values indicate better ranking',
+                text: 'Ranking Comparison',
+                subtext: 'Scaled to show relative differences between selected nodes',
                 left: 'center',
+                top: 10,
                 textStyle: {
                     fontSize: 20,
                     fontWeight: 600,
@@ -422,25 +522,18 @@ class NodeComparisonManager {
                     fontSize: 13
                 },
                 formatter: (params) => {
-                    if (!params.value) return '';
-                    const indicatorNames = [
-                        'Pleb Rank',
-                        'Channels Rank',
-                        'Capacity Rank',
-                        'Weighted Degree',
-                        'Betweenness',
-                        'Eigenvector'
-                    ];
+                    if (!params.value || !params.data.actualRanks) return '';
+                    const indicatorNames = metricNames;
                     let tooltip = `<strong style="font-size: 14px; color: ${params.color}">${params.name}</strong><br/>`;
-                    params.value.forEach((val, idx) => {
-                        tooltip += `${indicatorNames[idx]}: <strong>#${val.toLocaleString()}</strong><br/>`;
+                    params.data.actualRanks.forEach((rank, idx) => {
+                        tooltip += `${indicatorNames[idx]}: <strong>#${rank.toLocaleString()}</strong><br/>`;
                     });
                     return tooltip;
                 }
             },
             legend: {
                 data: seriesData.map(s => s.name),
-                bottom: 10,
+                bottom: 20,
                 left: 'center',
                 itemGap: 20,
                 textStyle: {
@@ -449,14 +542,15 @@ class NodeComparisonManager {
                 },
                 icon: 'roundRect',
                 itemWidth: 25,
-                itemHeight: 14
+                itemHeight: 14,
+                backgroundColor: 'transparent'
             },
             color: colors,
             radar: {
                 indicator: indicators,
                 shape: 'polygon',
-                radius: '65%',
-                center: ['50%', '52%'],
+                radius: '60%',
+                center: ['50%', '50%'],
                 splitNumber: 4,
                 splitArea: {
                     show: true,
@@ -479,70 +573,23 @@ class NodeComparisonManager {
                         width: 2
                     }
                 },
+                // Make axis labels visible with proper spacing
                 name: {
-                    formatter: (name, indicator) => {
-                        // Add the rank values for all nodes under each dimension name
-                        const dimIndex = metricNames.indexOf(name);
-                        if (dimIndex === -1) return name;
-                        
-                        let label = `{title|${name}}\n`;
-                        seriesData.forEach((node, idx) => {
-                            const value = node.value[dimIndex];
-                            const formattedValue = Math.round(value).toLocaleString();
-                            label += `{node${idx}|${node.name}: #${formattedValue}}\n`;
-                        });
-                        return label;
-                    },
+                    formatter: (name) => name,
                     textStyle: {
-                        color: 'var(--text-primary, #2c3e50)',
-                        fontSize: 12,
-                        fontWeight: 500,
-                        backgroundColor: 'transparent', // Remove white background
-                        padding: [8, 12],
-                        borderRadius: 6,
-                        lineHeight: 18,
-                        rich: {
-                            title: {
-                                fontSize: 13,
-                                fontWeight: 600,
-                                color: '#2c3e50',
-                                lineHeight: 20,
-                                backgroundColor: 'rgba(255, 255, 255, 0.8)', // Slight background only for title
-                                padding: [2, 6],
-                                borderRadius: 4
-                            },
-                            node0: {
-                                fontSize: 11,
-                                fontWeight: 400,
-                                color: colors[0],
-                                lineHeight: 16,
-                                backgroundColor: 'rgba(255, 255, 255, 0.75)',
-                                padding: [1, 4],
-                                borderRadius: 3
-                            },
-                            node1: {
-                                fontSize: 11,
-                                fontWeight: 400,
-                                color: colors[1],
-                                lineHeight: 16,
-                                backgroundColor: 'rgba(255, 255, 255, 0.75)',
-                                padding: [1, 4],
-                                borderRadius: 3
-                            },
-                            node2: {
-                                fontSize: 11,
-                                fontWeight: 400,
-                                color: colors[2],
-                                lineHeight: 16,
-                                backgroundColor: 'rgba(255, 255, 255, 0.75)',
-                                padding: [1, 4],
-                                borderRadius: 3
-                            }
-                        }
-                    }
+                        color: '#2c3e50',
+                        fontSize: 14,
+                        fontWeight: 600,
+                        backgroundColor: 'transparent',
+                        padding: [6, 10],
+                        borderRadius: 4,
+                        borderWidth: 0
+                    },
+                    // Important: increase gap between label and chart
+                    distance: 20
                 },
                 axisLabel: {
-                    show: false // Hide axis scale labels
+                    show: false
                 }
             },
             series: [{
@@ -551,21 +598,14 @@ class NodeComparisonManager {
             }]
         };
 
-        console.log('setting option');
         this.radarChart.setOption(option);
-        console.log('chart rendered');
         
         // Resize after a short delay to ensure container is visible
         setTimeout(() => {
             if (this.radarChart) {
                 this.radarChart.resize();
-                console.log('chart resized');
             }
         }, 100);
-    }
-
-    addRadarLabels(seriesData, indicators) {
-        // This method is no longer needed
     }
 
     handleKeyNavigation(e, inputId) {
@@ -615,7 +655,6 @@ class NodeComparisonManager {
     }
 
     handleSearchInput(searchTerm, inputId) {
-        console.log('handleSearchInput called with:', searchTerm, inputId);
         clearTimeout(this.debounceTimer);
         
         if (!searchTerm.trim()) {
@@ -655,8 +694,6 @@ class NodeComparisonManager {
 
         // Convert Set to Array and limit results
         const matchesArray = Array.from(matches).slice(0, 6);
-
-        console.log('showSuggestions called with:', searchTerm, inputId, 'matches:', matchesArray.length);
 
         if (matchesArray.length === 0) {
             this.hideSuggestions(inputId);
@@ -723,11 +760,18 @@ class NodeComparisonManager {
     }
 
     selectSuggestion(pubkey, inputId) {
-        console.log('selectSuggestion called with:', pubkey, inputId);
         this.hideSuggestions(inputId);
         const input = document.getElementById(inputId);
         if (input) {
-            input.value = pubkey;
+            // Find the node data to get the alias
+            const node = this.allNodesData.find(n => n.pub_key === pubkey);
+            
+            // Display alias if available, otherwise first 8 characters of pubkey
+            const displayValue = node?.alias || pubkey.substring(0, 8);
+            
+            input.value = displayValue;
+            // Store the actual pubkey in a data attribute for comparison
+            input.dataset.pubkey = pubkey;
         }
     }
 
@@ -824,12 +868,14 @@ class NodeComparisonManager {
     }
 
     showLoading() {
+        document.getElementById('welcomeState').style.display = 'none';
         document.getElementById('loadingState').style.display = 'flex';
         document.getElementById('errorState').style.display = 'none';
         document.getElementById('comparisonContent').style.display = 'none';
     }
 
     showError(message) {
+        document.getElementById('welcomeState').style.display = 'none';
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('errorState').style.display = 'flex';
         document.getElementById('comparisonContent').style.display = 'none';
@@ -837,6 +883,7 @@ class NodeComparisonManager {
     }
 
     showContent() {
+        document.getElementById('welcomeState').style.display = 'none';
         document.getElementById('loadingState').style.display = 'none';
         document.getElementById('errorState').style.display = 'none';
         document.getElementById('comparisonContent').style.display = 'block';
@@ -847,6 +894,13 @@ class NodeComparisonManager {
                 this.radarChart.resize();
             }
         }, 50);
+    }
+
+    showWelcome() {
+        document.getElementById('welcomeState').style.display = 'flex';
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'none';
+        document.getElementById('comparisonContent').style.display = 'none';
     }
 
     formatDate(dateStr) {

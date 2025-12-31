@@ -25,7 +25,6 @@
                 <div class="page-header-main">
                     <div class="page-title-group">
                         <h1>Node Comparison</h1>
-                        <p>Compare up to 3 Lightning Network nodes</p>
                     </div>
                     <div class="page-nav-compact">
                         <a href="prank.html" class="nav-link-compact" title="Node Rankings">
@@ -44,11 +43,21 @@
                 </div>
             </div>
 
-            <!-- Node Selection -->
+            <!-- Welcome State -->
+            <div id="welcomeState" class="welcome-state">
+                <div class="welcome-content-minimal">
+                    <p class="welcome-instruction">Select nodes to compare their rankings, capacity, channels, and network metrics</p>
+                    <a href="#" id="tryExampleLink" class="try-example-link">
+                        Try an example: ACINQ vs Boltz vs LNBiG [Hub-1]
+                    </a>
+                </div>
+            </div>
+
+            <!-- Node Selection - Hero Section -->
             <div class="explorer-controls">
-                <div class="controls-row-unified">
+                <div class="controls-row-unified controls-hero">
                     <div class="search-container">
-                        <input type="text" id="node1Input" placeholder="Node 1: Enter pubkey or alias..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" id="node1Input" placeholder="Enter node alias or pubkey..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                         <i class="fas fa-search search-icon"></i>
                         <div id="node1Suggestions" class="search-suggestions"></div>
                     </div>
@@ -56,15 +65,15 @@
                         <i class="fas fa-plus" title="Add another node"></i>
                     </div>
                     <div class="search-container">
-                        <input type="text" id="node2Input" placeholder="Node 2: Enter pubkey or alias..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" id="node2Input" placeholder="Enter node alias or pubkey..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                         <i class="fas fa-search search-icon"></i>
                         <div id="node2Suggestions" class="search-suggestions"></div>
                     </div>
                     <div class="search-divider">
-                        <i class="fas fa-plus" title="Add another node (optional)"></i>
+                        <i class="fas fa-plus" title="Add optional 3rd node"></i>
                     </div>
                     <div class="search-container">
-                        <input type="text" id="node3Input" placeholder="Node 3: Enter pubkey or alias (optional)..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <input type="text" id="node3Input" placeholder="Optional 3rd node..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                         <i class="fas fa-search search-icon"></i>
                         <div id="node3Suggestions" class="search-suggestions"></div>
                     </div>
@@ -73,10 +82,28 @@
                         Compare
                     </button>
                 </div>
+                <p class="controls-helper">
+                    Enter at least 2 nodes to compare their performance and network position
+                </p>
+                <div class="example-chips">
+                    <span class="example-label">Try examples:</span>
+                    <button class="example-chip" data-examples='["ACINQ", "Boltz", "LNBiG [Hub-1]"]'>
+                        <i class="fas fa-trophy"></i>
+                        Top Nodes
+                    </button>
+                    <button class="example-chip" data-examples='["Authenticity", "Megalithic.me", "cyberdyne.sh"]'>
+                        <i class="fas fa-route"></i>
+                        Routing Hubs
+                    </button>
+                    <button class="example-chip" data-examples='["LNBiG [Edge-1]", "1sats.com⚡️lsp.flashsats.xyz", "LQwD-Canada"]'>
+                        <i class="fas fa-server"></i>
+                        LSP
+                    </button>
+                </div>
             </div>
 
             <!-- Loading State -->
-            <div id="loadingState" class="loading-state">
+            <div id="loadingState" class="loading-state" style="display: none;">
                 <div class="loading-content">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>Loading node data...</p>
