@@ -57,11 +57,6 @@
     opacity: 0.6;
 }
 
-.controls-row-unified .compare-btn {
-    padding: 0.75rem 1.5rem;
-    min-width: auto;
-}
-
 /* Controls helper text */
 .controls-helper {
     text-align: center;

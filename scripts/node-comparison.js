@@ -348,23 +348,23 @@ class NodeComparisonManager {
 
         this.nodesData.forEach((node, index) => {
             const connectAddress = this.getConnectAddress(node);
+            const firstSeenYear = this.getFirstSeenYear(node.first_seen_week);
             const card = document.createElement('div');
             card.className = 'node-card';
             card.innerHTML = `
                 <div class="node-header">
                     <h3>${node.alias || 'Unknown Node'}</h3>
-                    <div class="node-pubkey">
-                        <span>${connectAddress.substring(0, 8)}...</span>
-                        <button class="copy-btn" data-text="${connectAddress}" title="Copy connect address">
-                            <i class="fas fa-copy"></i>
-                        </button>
+                    <div class="node-meta">
+                        <span class="first-seen">Since ${firstSeenYear}</span>
+                        <div class="node-pubkey">
+                            <span>${connectAddress.substring(0, 8)}...</span>
+                            <button class="copy-btn" data-text="${connectAddress}" title="Copy connect address">
+                                <i class="fas fa-copy"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="node-details">
-                    <div class="detail-row">
-                        <span class="label">First seen:</span>
-                        <span class="value">${this.formatDate(node.first_seen_week)}</span>
-                    </div>
                     <div class="detail-row">
                         <span class="label">Channels:</span>
                         <span class="value">${this.formatNumber(node.total_channels)}</span>
@@ -372,10 +372,6 @@ class NodeComparisonManager {
                     <div class="detail-row">
                         <span class="label">Capacity:</span>
                         <span class="value">${node.ftotal_capacity || this.formatCapacity(node.total_capacity)}</span>
-                    </div>
-                    <div class="detail-row">
-                        <span class="label">Capacity Tier:</span>
-                        <span class="value">${node.node_cap_tier || '-'}</span>
                     </div>
                     <div class="detail-row">
                         <span class="label">Overall Rank:</span>
@@ -427,7 +423,7 @@ class NodeComparisonManager {
         });
 
         // Create series data with scaling that preserves shape differences
-        const colors = ['#8BC34A', '#03A9F4', '#FFC107'];
+        const colors = ['#4E79A7', '#F28E2C', '#E15759'];
         const seriesData = this.rankData.map((node, index) => {
             // Store actual ranks for display
             const actualRanks = [
@@ -491,12 +487,16 @@ class NodeComparisonManager {
                     },
                     fontSize: 11,
                     fontWeight: 600,
-                    color: colors[index]
+                    color: '#000000'
+                },
+                labelLayout: {
+                    hideOverlap: true
                 }
             };
         });
 
         const option = {
+            backgroundColor: 'rgba(255, 250, 205, 0.2)', // Light yellowish Ghibli-inspired overlay
             title: {
                 text: 'Ranking Comparison',
                 subtext: 'Scaled to show relative differences between selected nodes',
@@ -556,20 +556,20 @@ class NodeComparisonManager {
                     show: true,
                     areaStyle: {
                         color: [
-                            'rgba(255, 255, 255, 0.02)',
-                            'rgba(200, 200, 200, 0.05)'
+                            'rgba(255, 255, 255, 0.01)',
+                            'rgba(240, 240, 240, 0.03)'
                         ]
                     }
                 },
                 splitLine: {
                     lineStyle: {
-                        color: 'rgba(200, 200, 200, 0.3)',
+                        color: 'rgba(220, 220, 220, 0.2)',
                         width: 1
                     }
                 },
                 axisLine: {
                     lineStyle: {
-                        color: 'rgba(200, 200, 200, 0.5)',
+                        color: 'rgba(220, 220, 220, 0.3)',
                         width: 2
                     }
                 },
@@ -924,6 +924,24 @@ class NodeComparisonManager {
             return dateStr; // fallback to original if not parseable
         } catch (e) {
             return dateStr; // fallback to original if parsing fails
+        }
+    }
+
+    getFirstSeenYear(firstSeenWeek) {
+        if (!firstSeenWeek || firstSeenWeek === null || firstSeenWeek === undefined) return 'N/A';
+        try {
+            // Assume format is YYYYMMDD (e.g., 20220316)
+            if (typeof firstSeenWeek === 'string' && /^\d{8}$/.test(firstSeenWeek)) {
+                const year = parseInt(firstSeenWeek.substring(0, 4));
+                const month = parseInt(firstSeenWeek.substring(4, 6)) - 1; // JS months are 0-based
+                const date = new Date(year, month, 1);
+                if (!isNaN(date.getTime())) {
+                    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short' });
+                }
+            }
+            return 'N/A';
+        } catch (e) {
+            return 'N/A';
         }
     }
 }
