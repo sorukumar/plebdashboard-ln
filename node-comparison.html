@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plebdashboard – Node Comparison</title>
+    
+    <!-- Bitcoin Data Labs styles -->
+    <link rel="stylesheet" href="https://sorukumar.github.io/Bitcoin-Data-Labs/styles/styles.css">
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Local styles -->
+    <link rel="stylesheet" href="styles/main.css">
+    <link rel="stylesheet" href="styles/components.css">
+    <link rel="stylesheet" href="styles/node-comparison.css">
+</head>
+<body>
+    <!-- Bitcoin Data Labs Header -->
+    <div id="header"></div>
+    
+    <div class="main-content">
+        <div class="explorer-container">
+            <!-- Compact Page Header -->
+            <div class="page-header-compact">
+                <div class="page-header-main">
+                    <div class="page-title-group">
+                        <h1>Node Comparison</h1>
+                        <p>Compare up to 3 Lightning Network nodes</p>
+                    </div>
+                    <div class="page-nav-compact">
+                        <a href="prank.html" class="nav-link-compact" title="Node Rankings">
+                            <i class="fas fa-chart-bar"></i>
+                            <span>Rankings</span>
+                        </a>
+                        <a href="node-explorer.html" class="nav-link-compact" title="Node Explorer">
+                            <i class="fas fa-compass"></i>
+                            <span>Nodes</span>
+                        </a>
+                        <a href="channel-explorer.html" class="nav-link-compact" title="Channel Explorer">
+                            <i class="fas fa-network-wired"></i>
+                            <span>Channels</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Node Selection -->
+            <div class="explorer-controls">
+                <div class="controls-row-unified">
+                    <div class="search-container">
+                        <input type="text" id="node1Input" placeholder="Node 1: Enter pubkey or alias..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <i class="fas fa-search search-icon"></i>
+                        <div id="node1Suggestions" class="search-suggestions"></div>
+                    </div>
+                    <div class="search-divider">
+                        <i class="fas fa-plus" title="Add another node"></i>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" id="node2Input" placeholder="Node 2: Enter pubkey or alias..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <i class="fas fa-search search-icon"></i>
+                        <div id="node2Suggestions" class="search-suggestions"></div>
+                    </div>
+                    <div class="search-divider">
+                        <i class="fas fa-plus" title="Add another node (optional)"></i>
+                    </div>
+                    <div class="search-container">
+                        <input type="text" id="node3Input" placeholder="Node 3: Enter pubkey or alias (optional)..." class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                        <i class="fas fa-search search-icon"></i>
+                        <div id="node3Suggestions" class="search-suggestions"></div>
+                    </div>
+                    <button id="compareBtn" class="compare-btn">
+                        <i class="fas fa-balance-scale"></i>
+                        Compare
+                    </button>
+                </div>
+            </div>
+
+            <!-- Loading State -->
+            <div id="loadingState" class="loading-state">
+                <div class="loading-content">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading node data...</p>
+                </div>
+            </div>
+
+            <!-- Error State -->
+            <div id="errorState" class="error-state" style="display: none;">
+                <div class="error-content">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p id="errorMessage">Error loading data</p>
+                </div>
+            </div>
+
+            <!-- Comparison Content -->
+            <div id="comparisonContent" class="comparison-content" style="display: none;">
+                <!-- Node Details Cards -->
+                <div class="nodes-grid" id="nodesGrid">
+                    <!-- Node cards will be populated here -->
+                </div>
+
+                <!-- Radar Chart -->
+                <div class="chart-section">
+                    <h2>Ranking Comparison</h2>
+                    <div id="radarChart" style="width: 100%; height: 600px;"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Bitcoin Data Labs Footer -->
+    <div id="footer"></div>
+
+    <!-- Bitcoin Data Labs App Components -->
+    <script src="https://sorukumar.github.io/Bitcoin-Data-Labs/components/app-components.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            BitcoinLabsAppComponents.init({
+                isApp: true,
+                appName: "plebdashboard-ln",
+                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/"
+            });
+        });
+    </script>
+    
+    <!-- ECharts for radar chart -->
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    
+    <!-- Node Comparison functionality -->
+    <script type="module" src="scripts/node-comparison.js"></script>
+</body>
+</html>

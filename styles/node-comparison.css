@@ -1,0 +1,219 @@
+/* ==========================================================================
+   NODE COMPARISON PAGE STYLES
+   ========================================================================== */
+
+/* Explorer Controls */
+.explorer-controls {
+    max-width: 1200px;
+    margin: 0 auto 2rem;
+    padding: 0 1rem;
+}
+
+/* Unified Controls Row - All primary controls on one line */
+.controls-row-unified {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding: 1rem;
+    background: var(--bg-secondary);
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    flex-wrap: wrap;
+}
+
+.controls-row-unified .search-container {
+    flex: 1;
+    min-width: 200px;
+    max-width: 300px;
+}
+
+/* Search divider for node comparison */
+.search-divider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-secondary);
+    font-size: 1.2rem;
+    padding: 0 0.5rem;
+    flex-shrink: 0;
+}
+
+.search-divider i {
+    opacity: 0.6;
+}
+
+.controls-row-unified .compare-btn {
+    padding: 0.75rem 1.5rem;
+    min-width: auto;
+}
+
+/* Loading and Error States */
+.loading-state, .error-state {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 300px;
+    text-align: center;
+}
+
+.loading-content, .error-content {
+    max-width: 400px;
+}
+
+.loading-content i, .error-content i {
+    font-size: 3rem;
+    color: var(--primary);
+    margin-bottom: 1rem;
+}
+
+.loading-content p, .error-content p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+/* Comparison Content */
+.comparison-content {
+    display: none;
+}
+
+/* Nodes Grid */
+.nodes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+    max-width: 1200px;
+    margin-left: auto;
+    margin-right: auto;
+    padding: 0 1rem;
+}
+
+/* Node Card */
+.node-card {
+    background: var(--bg-primary);
+    border: 1px solid var(--bg-secondary);
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.node-header {
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--bg-secondary);
+}
+
+.node-header h3 {
+    margin: 0 0 0.5rem 0;
+    color: var(--text-primary);
+    font-size: 1.2rem;
+}
+
+.node-pubkey {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.node-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--bg-secondary);
+}
+
+.detail-row:last-child {
+    border-bottom: none;
+}
+
+.label {
+    font-weight: 500;
+    color: var(--text-secondary);
+    min-width: 100px;
+}
+
+.value {
+    color: var(--text-primary);
+    text-align: right;
+    flex: 1;
+    word-break: break-word;
+}
+
+.connect-address {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.connect-address span {
+    font-family: monospace;
+    font-size: 0.8rem;
+}
+
+/* Chart Section */
+.chart-section {
+    background: var(--bg-primary);
+    border: 1px solid var(--bg-secondary);
+    border-radius: 12px;
+    padding: 2rem;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.chart-section h2 {
+    text-align: center;
+    color: var(--text-primary);
+    margin-bottom: 2rem;
+    font-size: 1.5rem;
+}
+
+#radarChart {
+    width: 100%;
+    height: 800px;
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN FOR COMPARISON
+   ========================================================================== */
+
+@media (max-width: 768px) {
+    .controls-row-unified {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.75rem;
+        padding: 1rem;
+    }
+
+    .controls-row-unified .search-container {
+        max-width: 100%;
+        min-width: 100%;
+    }
+    
+    .search-divider {
+        display: none; /* Hide plus on mobile */
+    }
+    
+    .nodes-grid {
+        grid-template-columns: 1fr;
+        padding: 0 0.5rem;
+    }
+
+    .chart-section {
+        padding: 1rem;
+    }
+
+    #radarChart {
+        height: 600px;
+    }
+}

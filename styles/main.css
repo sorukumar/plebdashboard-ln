@@ -196,8 +196,8 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
     top: 100%;
     left: 0;
     right: 0;
-    background: var(--surface);
-    border: 1px solid var(--bg-secondary);
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
     border-top: none;
     border-radius: 0 0 16px 16px;
     max-height: 240px;
@@ -211,13 +211,13 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
 
 .suggestion-item {
     padding: 12px 24px;
-    border-bottom: 1px solid var(--bg-secondary);
+    border-bottom: 1px solid var(--border);
     cursor: pointer;
     display: flex;
     justify-content: space-between;
     align-items: center;
     transition: background-color 0.2s ease;
-    background: var(--surface);
+    background: var(--bg-secondary);
     color: var(--text-primary);
 }
 
