@@ -8,6 +8,7 @@ ln-nodeprofile-rank/
 ├── index.html
 ├── prank.html
 ├── profile.html
+├── node-comparison.html
 ├── channel-explorer.html
 ├── node-explorer.html
 ├── README.md
@@ -25,6 +26,7 @@ ln-nodeprofile-rank/
 │   ├── profile-channels.js
 │   ├── profile-channels-table.js
 │   ├── table.js
+│   ├── node-comparison.js
 │   ├── node-explorer.js
 │   └── channel-explorer.js
 │
@@ -32,6 +34,7 @@ ln-nodeprofile-rank/
     ├── main.css
     ├── profile.css
     ├── table.css
+    ├── node-comparison.css
     ├── node-explorer.css
     └── components.css
 ```
@@ -48,6 +51,8 @@ ln-nodeprofile-rank/
   Rankings table: search, sort, filter, paginate. Table updates live. All logic in table.js.
 - **profile.html**  
   Node profile: stats, rankings, metrics, tabs (Overview, Rankings, Channels, Channel Details), copy pubkey, all dynamic. Uses profile.js, profile-channels.js, profile-channels-table.js.
+- **node-comparison.html**  
+  Node Comparison: compare 2-3 nodes side-by-side, radar chart visualization of rankings, search with autocomplete. All logic in node-comparison.js.
 - **channel-explorer.html**  
   Channel Explorer: table view with search by Node 1/Node 2, sort, pagination. All logic in channel-explorer.js.
 - **node-explorer.html**  
@@ -96,6 +101,8 @@ ln-nodeprofile-rank/
   Render channel table: sort, filter, paginate, format (fees, HTLC, status), table events.
 - **table.js**  
   Rankings table: load data, render, sort, filter, paginate, search, loading/error UI.
+- **node-comparison.js**  
+  Node Comparison: load node data for 2-3 nodes, search with autocomplete, render node cards, display radar chart comparing rankings across dimensions.
 - **node-explorer.js**  
   Node Explorer: load/filter/sort nodes, advanced filters, search, grid/list, pagination, render node cards, all UI events.
 - **channel-explorer.js**  
@@ -113,6 +120,9 @@ ln-nodeprofile-rank/
 
 - **table.css**  
   Styles for the rankings table.
+
+- **node-comparison.css**  
+  Styles for the node comparison page.
 
 - **node-explorer.css**  
   Styles for the node explorer page.
@@ -137,6 +147,12 @@ ln-nodeprofile-rank/
 - **prank.html**  
   → `table.js`  
     - Loads and displays node rankings table
+
+- **node-comparison.html**  
+  → `node-comparison.js`  
+    - Loads multiple node profiles  
+    - Handles node search with autocomplete  
+    - Renders radar chart comparison
 
 - **node-explorer.html**  
   → `node-explorer.js`  
@@ -176,6 +192,8 @@ ln-nodeprofile-rank/
 [profile.html?node=...] --(profile view)--> [profile.js] --(fetch)--> [node_profile.parquet] (fallback: node_rank.parquet)
   ↓
 [prank.html] --(table view)--> [table.js] --(fetch)--> [node_rank.parquet]
+  ↓
+[node-comparison.html] --(comparison view)--> [node-comparison.js] --(fetch)--> [node_profile.parquet] (fallback: node_rank.parquet)
   ↓
 [node-explorer.html] --(node explorer view)--> [node-explorer.js] --(fetch)--> [node_rank.parquet]
   ↓

@@ -390,23 +390,7 @@ class NodeComparisonManager {
                     color: colors[index]
                 },
                 label: {
-                    show: true,
-                    position: 'top',
-                    distance: 8,
-                    formatter: function(params) {
-                        // params.value is the array of all values
-                        // We need to get which dimension this label is for
-                        // This is a workaround - we'll show all values
-                        return '';
-                    },
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: colors[index],
-                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
-                    padding: [2, 5],
-                    borderRadius: 3,
-                    borderColor: colors[index],
-                    borderWidth: 1
+                    show: false // Hide the empty label boxes
                 }
             };
         });
@@ -520,7 +504,7 @@ class NodeComparisonManager {
                         rich: {
                             title: {
                                 fontSize: 13,
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 color: '#2c3e50',
                                 lineHeight: 20,
                                 backgroundColor: 'rgba(255, 255, 255, 0.8)', // Slight background only for title
@@ -529,7 +513,7 @@ class NodeComparisonManager {
                             },
                             node0: {
                                 fontSize: 11,
-                                fontWeight: 600,
+                                fontWeight: 400,
                                 color: colors[0],
                                 lineHeight: 16,
                                 backgroundColor: 'rgba(255, 255, 255, 0.75)',
@@ -538,7 +522,7 @@ class NodeComparisonManager {
                             },
                             node1: {
                                 fontSize: 11,
-                                fontWeight: 600,
+                                fontWeight: 400,
                                 color: colors[1],
                                 lineHeight: 16,
                                 backgroundColor: 'rgba(255, 255, 255, 0.75)',
@@ -547,7 +531,7 @@ class NodeComparisonManager {
                             },
                             node2: {
                                 fontSize: 11,
-                                fontWeight: 600,
+                                fontWeight: 400,
                                 color: colors[2],
                                 lineHeight: 16,
                                 backgroundColor: 'rgba(255, 255, 255, 0.75)',
