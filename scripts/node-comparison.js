@@ -119,7 +119,6 @@ class NodeComparisonManager {
                             const input = document.getElementById(inputId);
                             if (input) {
                                 input.value = node.alias;
-                                input.dataset.pubkey = node.pub_key;
                             }
                         }
                     });
@@ -148,7 +147,6 @@ class NodeComparisonManager {
                         const input = document.getElementById(inputIds[index]);
                         if (input) {
                             input.value = node.alias;
-                            input.dataset.pubkey = node.pub_key;
                         }
                     }
                 });
@@ -218,10 +216,10 @@ class NodeComparisonManager {
         const input2 = document.getElementById('node2Input');
         const input3 = document.getElementById('node3Input');
 
-        // Get pubkey from data attribute if available, otherwise use input value
-        const node1 = input1.dataset.pubkey || input1.value.trim();
-        const node2 = input2.dataset.pubkey || input2.value.trim();
-        const node3 = input3.dataset.pubkey || input3.value.trim();
+        // Use input value directly (can be alias or pubkey)
+        const node1 = input1.value.trim();
+        const node2 = input2.value.trim();
+        const node3 = input3.value.trim();
 
         const nodeIds = [node1, node2];
         if (node3) nodeIds.push(node3);
@@ -406,13 +404,19 @@ class NodeComparisonManager {
         this.radarChart = echarts.init(chartDom);
 
         // Dynamic scaling: scale based on actual ranks being compared
-        const metricNames = ['Pleb Rank', 'Channels', 'Capacity', 'Weighted Degree', 'Betweenness', 'Eigenvector'];
+        const metricNames = ['Overall Rank (PRank)', 'Channel Count', 'Total Capacity', 'Social Butterfly (Degree)', 'Crossroads (Betweenness)', 'Star Power (Eigenvector)'];
         const metricKeys = ['pleb_rank', 'channels_rank', 'capacity_rank', 'weighted_degree_rank', 'betweenness_rank', 'eigenvector_rank'];
         
         // Collect all actual ranks for each dimension
         const allRanksByDimension = metricKeys.map(key => 
             this.rankData.map(node => node[key] || 10000)
         );
+        
+        // Compute max rank per dimension for dynamic scaling
+        const maxRanksPerDimension = allRanksByDimension.map(ranks => Math.max(...ranks));
+        
+        // Compute min rank per dimension for linear scaling
+        const minRanksPerDimension = allRanksByDimension.map(ranks => Math.min(...ranks));
         
         // Build indicators with max = 100 (percentage scale)
         const indicators = metricNames.map((name) => {
@@ -435,25 +439,31 @@ class NodeComparisonManager {
                 node.eigenvector_rank || 10000
             ];
             
-            // SIMPLE APPROACH with more aggressive scaling
-            // Lower rank = better = larger value
-            // Use logarithmic scale to make differences more dramatic
-            const values = actualRanks.map((rank) => {
-                // Use logarithmic scale to emphasize differences
-                // log(1) = 0, log(10) = 1, log(100) = 2
-                // This makes rank #1 vs #3 more different
-                // And rank #2 vs #20 MUCH more different
+            // Adaptive linear scaling per dimension: lower rank = better = larger value
+            // Uses mid-range (40-80) for close ranks to show subtle differences, raised minimum (30-100) for spread ranks to ensure visible shapes for all nodes
+            const values = actualRanks.map((rank, index) => {
+                const minRank = minRanksPerDimension[index];
+                const maxRank = maxRanksPerDimension[index];
+                const range = maxRank - minRank;
                 
-                // Apply log scaling
-                const logRank = Math.log10(rank);
-                const maxLogRank = Math.log10(100); // log10(100) = 2
+                let minValue, maxValue;
+                if (range < 100) {
+                    minValue = 40;
+                    maxValue = 80;
+                } else {
+                    minValue = 30;
+                    maxValue = 100;
+                }
                 
-                // Invert: better rank (lower) = higher value
-                // Scale from log space to 20-100
-                const normalizedLog = 1 - (logRank / maxLogRank); // 0 to 1, where 1 is best
-                const value = 20 + (normalizedLog * 80); // Scale to 20-100
+                let normalized;
+                if (range === 0) {
+                    normalized = 0.5;
+                } else {
+                    normalized = (maxRank - rank) / range;
+                }
                 
-                return Math.max(20, Math.min(100, value));
+                const value = minValue + normalized * (maxValue - minValue);
+                return Math.max(minValue, Math.min(maxValue, value));
             });
             
             return {
@@ -533,8 +543,8 @@ class NodeComparisonManager {
             },
             legend: {
                 data: seriesData.map(s => s.name),
-                bottom: 20,
-                left: 'center',
+                top: 'center',
+                left: 'left',
                 itemGap: 20,
                 textStyle: {
                     fontSize: 13,
@@ -543,13 +553,14 @@ class NodeComparisonManager {
                 icon: 'roundRect',
                 itemWidth: 25,
                 itemHeight: 14,
-                backgroundColor: 'transparent'
+                backgroundColor: 'transparent',
+                orient: 'vertical'
             },
             color: colors,
             radar: {
                 indicator: indicators,
                 shape: 'polygon',
-                radius: '60%',
+                radius: '80%',
                 center: ['50%', '50%'],
                 splitNumber: 4,
                 splitArea: {
@@ -770,8 +781,6 @@ class NodeComparisonManager {
             const displayValue = node?.alias || pubkey.substring(0, 8);
             
             input.value = displayValue;
-            // Store the actual pubkey in a data attribute for comparison
-            input.dataset.pubkey = pubkey;
         }
     }
 
