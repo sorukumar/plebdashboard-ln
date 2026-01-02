@@ -11,7 +11,28 @@ class NodeComparisonManager {
         this.selectedSuggestionIndex = -1;
         this.currentInputId = null;
         this.radarChart = null; // Store chart instance
+        this.channelChart = null; // Store channel chart instance
         this.init();
+    }
+
+    // Helper method to safely convert BigInt values
+    safeConvertValue(value) {
+        if (typeof value === 'bigint') {
+            return value.toString();
+        }
+        if (Array.isArray(value)) {
+            return value.map(item => this.safeConvertValue(item));
+        }
+        if (value && typeof value === 'object') {
+            const result = {};
+            for (const key in value) {
+                if (value.hasOwnProperty(key)) {
+                    result[key] = this.safeConvertValue(value[key]);
+                }
+            }
+            return result;
+        }
+        return value;
     }
 
     async init() {
@@ -34,7 +55,7 @@ class NodeComparisonManager {
                     const columns = this.getRankColumns();
                     this.allNodesData = result.map(row => {
                         const obj = {};
-                        columns.forEach((col, i) => obj[col] = row[i]);
+                        columns.forEach((col, i) => obj[col] = this.safeConvertValue(row[i]));
                         return obj;
                     }).filter(node => node.pub_key);
                     console.log('Loaded', this.allNodesData.length, 'nodes');
@@ -196,6 +217,9 @@ class NodeComparisonManager {
             if (this.radarChart) {
                 this.radarChart.resize();
             }
+            if (this.channelChart) {
+                this.channelChart.resize();
+            }
         });
     }
 
@@ -257,7 +281,7 @@ class NodeComparisonManager {
                     const columns = this.getProfileColumns();
                     const parsedData = result.map(row => {
                         const obj = {};
-                        columns.forEach((col, i) => obj[col] = row[i]);
+                        columns.forEach((col, i) => obj[col] = this.safeConvertValue(row[i]));
                         return obj;
                     });
 
@@ -293,7 +317,7 @@ class NodeComparisonManager {
                     const columns = this.getRankColumns();
                     const parsedData = result.map(row => {
                         const obj = {};
-                        columns.forEach((col, i) => obj[col] = row[i]);
+                        columns.forEach((col, i) => obj[col] = this.safeConvertValue(row[i]));
                         return obj;
                     });
 
@@ -337,6 +361,7 @@ class NodeComparisonManager {
     renderComparison() {
         this.renderNodeCards();
         this.renderRadarChart();
+        this.renderChannelDistributionChart();
         this.showContent();
     }
 
@@ -617,6 +642,159 @@ class NodeComparisonManager {
                 this.radarChart.resize();
             }
         }, 100);
+    }
+
+    renderChannelDistributionChart() {
+        const chartDom = document.getElementById('channelDistributionChart');
+        if (!chartDom) {
+            console.error('channelDistributionChart element not found');
+            return;
+        }
+
+        // Dispose of existing chart instance if any
+        if (this.channelChart) {
+            this.channelChart.dispose();
+        }
+
+        this.channelChart = echarts.init(chartDom);
+
+        // Collect all unique categories from all nodes
+        const allCategories = new Set();
+        this.nodesData.forEach(node => {
+            if (node.category_counts) {
+                let counts = node.category_counts;
+                if (typeof counts === 'string') {
+                    try {
+                        counts = JSON.parse(counts);
+                    } catch (e) {
+                        counts = {};
+                    }
+                }
+                if (counts && typeof counts === 'object') {
+                    Object.keys(counts).forEach(cat => allCategories.add(cat));
+                }
+            }
+        });
+
+        const categories = Array.from(allCategories).sort();
+
+        // Create stacked series - one series per category
+        const seriesData = categories.map((category, categoryIndex) => {
+            const data = this.nodesData.map((node, nodeIndex) => {
+                let counts = node.category_counts || {};
+                if (typeof counts === 'string') {
+                    try {
+                        counts = JSON.parse(counts);
+                    } catch (e) {
+                        counts = {};
+                    }
+                }
+                return counts[category] || 0;
+            });
+
+            return {
+                name: category,
+                type: 'bar',
+                stack: 'channels',
+                data: data,
+                itemStyle: {
+                    color: this.getCategoryColor(category)
+                },
+                label: {
+                    show: true,
+                    position: 'inside',
+                    formatter: (params) => params.value > 0 ? params.value : ''
+                }
+            };
+        });
+
+        const option = {
+            backgroundColor: 'rgba(255, 250, 205, 0.2)',
+            title: {
+                text: 'Channel Size Distribution',
+                subtext: 'Stacked view of channel categories by node',
+                left: 'center',
+                top: 10,
+                textStyle: {
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: 'var(--text-primary, #2c3e50)'
+                },
+                subtextStyle: {
+                    fontSize: 12,
+                    color: 'var(--text-secondary, #7f8c8d)'
+                }
+            },
+            tooltip: {
+                trigger: 'axis',
+                axisPointer: {
+                    type: 'shadow'
+                },
+                formatter: (params) => {
+                    const nodeIndex = params[0].dataIndex;
+                    const node = this.nodesData[nodeIndex];
+                    let tooltip = `<strong>${node.alias || `Node ${nodeIndex + 1}`}</strong><br/>`;
+                    params.forEach(param => {
+                        if (param.value > 0) {
+                            tooltip += `${param.seriesName}: <strong>${param.value}</strong><br/>`;
+                        }
+                    });
+                    return tooltip;
+                }
+            },
+            legend: {
+                data: categories,
+                top: 'center',
+                left: 'left',
+                orient: 'vertical',
+                textStyle: {
+                    fontSize: 12,
+                    color: 'var(--text-primary, #2c3e50)'
+                }
+            },
+            grid: {
+                left: '15%',
+                right: '5%',
+                bottom: '3%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: this.nodesData.map((node, index) => node.alias || `Node ${index + 1}`),
+                axisLabel: {
+                    rotate: 45,
+                    fontSize: 11
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: 'Number of Channels',
+                nameTextStyle: {
+                    fontSize: 12
+                }
+            },
+            series: seriesData
+        };
+
+        this.channelChart.setOption(option);
+
+        // Resize after a short delay to ensure container is visible
+        setTimeout(() => {
+            if (this.channelChart) {
+                this.channelChart.resize();
+            }
+        }, 100);
+    }
+
+    // Helper method to get colors for channel categories
+    getCategoryColor(category) {
+        const colorMap = {
+            'freeway': '#4E79A7',  // Blue
+            'highway': '#F28E2C',  // Orange
+            'myway': '#E15759',    // Red
+            'default': '#76B7B2'   // Teal for unknown categories
+        };
+        return colorMap[category.toLowerCase()] || colorMap.default;
     }
 
     handleKeyNavigation(e, inputId) {
@@ -901,6 +1079,9 @@ class NodeComparisonManager {
         setTimeout(() => {
             if (this.radarChart) {
                 this.radarChart.resize();
+            }
+            if (this.channelChart) {
+                this.channelChart.resize();
             }
         }, 50);
     }
