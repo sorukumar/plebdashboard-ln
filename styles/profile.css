@@ -912,6 +912,20 @@
     }
 }
 
+/* Category Counts Styling */
+#categoryCounts ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    text-align: right;
+}
+
+#categoryCounts li {
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+}
+
 @media (max-width: 480px) {
     .channels-table {
         min-width: 900px;

@@ -12,6 +12,8 @@ class NodeComparisonManager {
         this.currentInputId = null;
         this.radarChart = null; // Store chart instance
         this.channelChart = null; // Store channel chart instance
+        this.channelSizeChart = null; // Store channel size distributions chart
+        this.channelData = []; // Store channel data
         this.init();
     }
 
@@ -220,6 +222,9 @@ class NodeComparisonManager {
             if (this.channelChart) {
                 this.channelChart.resize();
             }
+            if (this.channelSizeChart) {
+                this.channelSizeChart.resize();
+            }
         });
     }
 
@@ -260,9 +265,20 @@ class NodeComparisonManager {
     async loadDataAndRender() {
         try {
             this.showLoading();
+            // Load essential data first (for radar chart and node cards)
             await this.loadNodeData();
             await this.loadRankData();
-            this.renderComparison();
+            
+            // Render initial charts (radar and stacked bar)
+            this.renderInitialComparison();
+            
+            // Load channel data in background for the final chart
+            this.loadChannelData().then(() => {
+                this.renderChannelSizeDistributions();
+            }).catch(error => {
+                console.error('Error loading channel data:', error);
+                // Still show the page even if channel data fails
+            });
         } catch (error) {
             console.error('Error loading data:', error);
             this.showError('Failed to load node data: ' + error.message);
@@ -338,6 +354,32 @@ class NodeComparisonManager {
         });
     }
 
+    async loadChannelData() {
+        const response = await fetch('data/channel_profile.parquet');
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        const buffer = await response.arrayBuffer();
+
+        return new Promise((resolve) => {
+            parquetRead({
+                file: buffer,
+                onComplete: (result) => {
+                    const columns = this.getChannelColumns();
+                    this.channelData = result.map(row => {
+                        const obj = {};
+                        columns.forEach((col, i) => obj[col] = this.safeConvertValue(row[i]));
+                        return obj;
+                    });
+                    console.log('Loaded', this.channelData.length, 'channels');
+                    resolve();
+                },
+                onError: (error) => {
+                    console.error('Error parsing channel data:', error);
+                    resolve();
+                }
+            });
+        });
+    }
+
     getProfileColumns() {
         return [
             'pub_key', 'alias', 'address_1', 'address_2', 'last_seen', 'source', 'snapshot_date', 'update_dt', 
@@ -358,7 +400,22 @@ class NodeComparisonManager {
         ];
     }
 
+    getChannelColumns() {
+        return [
+            'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 
+            'alias_1', 'alias_2', 'birth_tx', 'channel_id', 'in_latest_gossip'
+        ];
+    }
+
     renderComparison() {
+        this.renderNodeCards();
+        this.renderRadarChart();
+        this.renderChannelDistributionChart();
+        this.renderChannelSizeDistributions();
+        this.showContent();
+    }
+
+    renderInitialComparison() {
         this.renderNodeCards();
         this.renderRadarChart();
         this.renderChannelDistributionChart();
@@ -421,226 +478,229 @@ class NodeComparisonManager {
             return;
         }
         
-        // Dispose of existing chart instance if any
-        if (this.radarChart) {
-            this.radarChart.dispose();
-        }
-        
-        this.radarChart = echarts.init(chartDom);
-
-        // Dynamic scaling: scale based on actual ranks being compared
-        const metricNames = ['Overall Rank (PRank)', 'Channel Count', 'Total Capacity', 'Social Butterfly (Degree)', 'Crossroads (Betweenness)', 'Star Power (Eigenvector)'];
-        const metricKeys = ['pleb_rank', 'channels_rank', 'capacity_rank', 'weighted_degree_rank', 'betweenness_rank', 'eigenvector_rank'];
-        
-        // Collect all actual ranks for each dimension
-        const allRanksByDimension = metricKeys.map(key => 
-            this.rankData.map(node => node[key] || 10000)
-        );
-        
-        // Compute max rank per dimension for dynamic scaling
-        const maxRanksPerDimension = allRanksByDimension.map(ranks => Math.max(...ranks));
-        
-        // Compute min rank per dimension for linear scaling
-        const minRanksPerDimension = allRanksByDimension.map(ranks => Math.min(...ranks));
-        
-        // Build indicators with max = 100 (percentage scale)
-        const indicators = metricNames.map((name) => {
-            return {
-                name: name,
-                max: 100  // Percentage scale for all dimensions
-            };
-        });
-
-        // Create series data with scaling that preserves shape differences
-        const colors = ['#4E79A7', '#F28E2C', '#E15759'];
-        const seriesData = this.rankData.map((node, index) => {
-            // Store actual ranks for display
-            const actualRanks = [
-                node.pleb_rank || 10000,
-                node.channels_rank || 10000,
-                node.capacity_rank || 10000,
-                node.weighted_degree_rank || 10000,
-                node.betweenness_rank || 10000,
-                node.eigenvector_rank || 10000
-            ];
-            
-            // Adaptive linear scaling per dimension: lower rank = better = larger value
-            // Uses mid-range (40-80) for close ranks to show subtle differences, raised minimum (30-100) for spread ranks to ensure visible shapes for all nodes
-            const values = actualRanks.map((rank, index) => {
-                const minRank = minRanksPerDimension[index];
-                const maxRank = maxRanksPerDimension[index];
-                const range = maxRank - minRank;
-                
-                let minValue, maxValue;
-                if (range < 100) {
-                    minValue = 40;
-                    maxValue = 80;
-                } else {
-                    minValue = 30;
-                    maxValue = 100;
-                }
-                
-                let normalized;
-                if (range === 0) {
-                    normalized = 0.5;
-                } else {
-                    normalized = (maxRank - rank) / range;
-                }
-                
-                const value = minValue + normalized * (maxValue - minValue);
-                return Math.max(minValue, Math.min(maxValue, value));
-            });
-            
-            return {
-                name: node.alias || `Node ${index + 1}`,
-                value: values,
-                actualRanks: actualRanks,  // Store for label display
-                lineStyle: {
-                    width: 2.5,
-                    color: colors[index]
-                },
-                areaStyle: {
-                    opacity: 0.2,
-                    color: colors[index]
-                },
-                symbol: 'circle',
-                symbolSize: 6,
-                itemStyle: {
-                    color: colors[index],
-                    borderColor: '#fff',
-                    borderWidth: 1
-                },
-                // Enable clean data labels at each vertex showing actual rank
-                label: {
-                    show: true,
-                    position: 'top',
-                    distance: 5,
-                    formatter: (params) => {
-                        // Show actual rank number from stored data
-                        const dimIndex = params.dimensionIndex;
-                        return Math.round(actualRanks[dimIndex]);
-                    },
-                    fontSize: 11,
-                    fontWeight: 600,
-                    color: '#000000'
-                },
-                labelLayout: {
-                    hideOverlap: true
-                }
-            };
-        });
-
-        const option = {
-            backgroundColor: 'rgba(255, 250, 205, 0.2)', // Light yellowish Ghibli-inspired overlay
-            title: {
-                text: 'Ranking Comparison',
-                subtext: 'Scaled to show relative differences between selected nodes',
-                left: 'center',
-                top: 10,
-                textStyle: {
-                    fontSize: 20,
-                    fontWeight: 600,
-                    color: 'var(--text-primary, #2c3e50)'
-                },
-                subtextStyle: {
-                    fontSize: 14,
-                    color: 'var(--text-secondary, #7f8c8d)'
-                }
-            },
-            tooltip: {
-                trigger: 'item',
-                backgroundColor: 'rgba(50, 50, 50, 0.95)',
-                borderColor: '#555',
-                borderWidth: 1,
-                textStyle: {
-                    color: '#fff',
-                    fontSize: 13
-                },
-                formatter: (params) => {
-                    if (!params.value || !params.data.actualRanks) return '';
-                    const indicatorNames = metricNames;
-                    let tooltip = `<strong style="font-size: 14px; color: ${params.color}">${params.name}</strong><br/>`;
-                    params.data.actualRanks.forEach((rank, idx) => {
-                        tooltip += `${indicatorNames[idx]}: <strong>#${rank.toLocaleString()}</strong><br/>`;
-                    });
-                    return tooltip;
-                }
-            },
-            legend: {
-                data: seriesData.map(s => s.name),
-                top: 'center',
-                left: 'left',
-                itemGap: 20,
-                textStyle: {
-                    fontSize: 13,
-                    color: 'var(--text-primary, #2c3e50)'
-                },
-                icon: 'roundRect',
-                itemWidth: 25,
-                itemHeight: 14,
-                backgroundColor: 'transparent',
-                orient: 'vertical'
-            },
-            color: colors,
-            radar: {
-                indicator: indicators,
-                shape: 'polygon',
-                radius: '80%',
-                center: ['50%', '50%'],
-                splitNumber: 4,
-                splitArea: {
-                    show: true,
-                    areaStyle: {
-                        color: [
-                            'rgba(255, 255, 255, 0.01)',
-                            'rgba(240, 240, 240, 0.03)'
-                        ]
-                    }
-                },
-                splitLine: {
-                    lineStyle: {
-                        color: 'rgba(220, 220, 220, 0.2)',
-                        width: 1
-                    }
-                },
-                axisLine: {
-                    lineStyle: {
-                        color: 'rgba(220, 220, 220, 0.3)',
-                        width: 2
-                    }
-                },
-                // Make axis labels visible with proper spacing
-                name: {
-                    formatter: (name) => name,
-                    textStyle: {
-                        color: '#2c3e50',
-                        fontSize: 14,
-                        fontWeight: 600,
-                        backgroundColor: 'transparent',
-                        padding: [6, 10],
-                        borderRadius: 4,
-                        borderWidth: 0
-                    },
-                    // Important: increase gap between label and chart
-                    distance: 20
-                },
-                axisLabel: {
-                    show: false
-                }
-            },
-            series: [{
-                type: 'radar',
-                data: seriesData
-            }]
-        };
-
-        this.radarChart.setOption(option);
-        
-        // Resize after a short delay to ensure container is visible
+        // Delay chart initialization to ensure container is properly sized
         setTimeout(() => {
+            // Dispose of existing chart instance if any
             if (this.radarChart) {
-                this.radarChart.resize();
+                this.radarChart.dispose();
             }
+            
+            this.radarChart = echarts.init(chartDom);
+
+            // Dynamic scaling: scale based on actual ranks being compared
+            const metricNames = ['Overall Rank (PRank)', 'Channel Count', 'Total Capacity', 'Social Butterfly (Degree)', 'Crossroads (Betweenness)', 'Star Power (Eigenvector)'];
+            const metricKeys = ['pleb_rank', 'channels_rank', 'capacity_rank', 'weighted_degree_rank', 'betweenness_rank', 'eigenvector_rank'];
+            
+            // Collect all actual ranks for each dimension
+            const allRanksByDimension = metricKeys.map(key => 
+                this.rankData.map(node => node[key] || 10000)
+            );
+            
+            // Compute max rank per dimension for dynamic scaling
+            const maxRanksPerDimension = allRanksByDimension.map(ranks => Math.max(...ranks));
+            
+            // Compute min rank per dimension for linear scaling
+            const minRanksPerDimension = allRanksByDimension.map(ranks => Math.min(...ranks));
+            
+            // Build indicators with max = 100 (percentage scale)
+            const indicators = metricNames.map((name) => {
+                return {
+                    name: name,
+                    max: 100  // Percentage scale for all dimensions
+                };
+            });
+
+            // Create series data with scaling that preserves shape differences
+            const colors = ['#4E79A7', '#F28E2C', '#E15759'];
+            const seriesData = this.rankData.map((node, index) => {
+                // Store actual ranks for display
+                const actualRanks = [
+                    node.pleb_rank || 10000,
+                    node.channels_rank || 10000,
+                    node.capacity_rank || 10000,
+                    node.weighted_degree_rank || 10000,
+                    node.betweenness_rank || 10000,
+                    node.eigenvector_rank || 10000
+                ];
+                
+                // Adaptive linear scaling per dimension: lower rank = better = larger value
+                // Uses mid-range (40-80) for close ranks to show subtle differences, raised minimum (30-100) for spread ranks to ensure visible shapes for all nodes
+                const values = actualRanks.map((rank, index) => {
+                    const minRank = minRanksPerDimension[index];
+                    const maxRank = maxRanksPerDimension[index];
+                    const range = maxRank - minRank;
+                    
+                    let minValue, maxValue;
+                    if (range < 100) {
+                        minValue = 40;
+                        maxValue = 80;
+                    } else {
+                        minValue = 30;
+                        maxValue = 100;
+                    }
+                    
+                    let normalized;
+                    if (range === 0) {
+                        normalized = 0.5;
+                    } else {
+                        normalized = (maxRank - rank) / range;
+                    }
+                    
+                    const value = minValue + normalized * (maxValue - minValue);
+                    return Math.max(minValue, Math.min(maxValue, value));
+                });
+                
+                return {
+                    name: node.alias || `Node ${index + 1}`,
+                    value: values,
+                    actualRanks: actualRanks,  // Store for label display
+                    lineStyle: {
+                        width: 2.5,
+                        color: colors[index]
+                    },
+                    areaStyle: {
+                        opacity: 0.2,
+                        color: colors[index]
+                    },
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    itemStyle: {
+                        color: colors[index],
+                        borderColor: '#fff',
+                        borderWidth: 1
+                    },
+                    // Enable clean data labels at each vertex showing actual rank
+                    label: {
+                        show: true,
+                        position: 'top',
+                        distance: 5,
+                        formatter: (params) => {
+                            // Show actual rank number from stored data
+                            const dimIndex = params.dimensionIndex;
+                            return Math.round(actualRanks[dimIndex]);
+                        },
+                        fontSize: 11,
+                        fontWeight: 600,
+                        color: '#000000'
+                    },
+                    labelLayout: {
+                        hideOverlap: true
+                    }
+                };
+            });
+
+            const option = {
+                backgroundColor: 'rgba(255, 250, 205, 0.2)', // Light yellowish Ghibli-inspired overlay
+                title: {
+                    text: 'Ranking Comparison',
+                    subtext: 'Scaled to show relative differences between selected nodes',
+                    left: 'center',
+                    top: 10,
+                    textStyle: {
+                        fontSize: 20,
+                        fontWeight: 600,
+                        color: 'var(--text-primary, #2c3e50)'
+                    },
+                    subtextStyle: {
+                        fontSize: 14,
+                        color: 'var(--text-secondary, #7f8c8d)'
+                    }
+                },
+                tooltip: {
+                    trigger: 'item',
+                    backgroundColor: 'rgba(50, 50, 50, 0.95)',
+                    borderColor: '#555',
+                    borderWidth: 1,
+                    textStyle: {
+                        color: '#fff',
+                        fontSize: 13
+                    },
+                    formatter: (params) => {
+                        if (!params.value || !params.data.actualRanks) return '';
+                        const indicatorNames = metricNames;
+                        let tooltip = `<strong style="font-size: 14px; color: ${params.color}">${params.name}</strong><br/>`;
+                        params.data.actualRanks.forEach((rank, idx) => {
+                            tooltip += `${indicatorNames[idx]}: <strong>#${rank.toLocaleString()}</strong><br/>`;
+                        });
+                        return tooltip;
+                    }
+                },
+                legend: {
+                    data: seriesData.map(s => s.name),
+                    top: 'center',
+                    left: 'left',
+                    itemGap: 20,
+                    textStyle: {
+                        fontSize: 13,
+                        color: 'var(--text-primary, #2c3e50)'
+                    },
+                    icon: 'roundRect',
+                    itemWidth: 25,
+                    itemHeight: 14,
+                    backgroundColor: 'transparent',
+                    orient: 'vertical'
+                },
+                color: colors,
+                radar: {
+                    indicator: indicators,
+                    shape: 'polygon',
+                    radius: '80%',
+                    center: ['50%', '50%'],
+                    splitNumber: 4,
+                    splitArea: {
+                        show: true,
+                        areaStyle: {
+                            color: [
+                                'rgba(255, 255, 255, 0.01)',
+                                'rgba(240, 240, 240, 0.03)'
+                            ]
+                        }
+                    },
+                    splitLine: {
+                        lineStyle: {
+                            color: 'rgba(220, 220, 220, 0.2)',
+                            width: 1
+                        }
+                    },
+                    axisLine: {
+                        lineStyle: {
+                            color: 'rgba(220, 220, 220, 0.3)',
+                            width: 2
+                        }
+                    },
+                    // Make axis labels visible with proper spacing
+                    name: {
+                        formatter: (name) => name,
+                        textStyle: {
+                            color: '#2c3e50',
+                            fontSize: 14,
+                            fontWeight: 600,
+                            backgroundColor: 'transparent',
+                            padding: [6, 10],
+                            borderRadius: 4,
+                            borderWidth: 0
+                        },
+                        // Important: increase gap between label and chart
+                        distance: 20
+                    },
+                    axisLabel: {
+                        show: false
+                    }
+                },
+                series: [{
+                    type: 'radar',
+                    data: seriesData
+                }]
+            };
+
+            this.radarChart.setOption(option);
+            
+            // Resize after a short delay to ensure container is visible
+            setTimeout(() => {
+                if (this.radarChart) {
+                    this.radarChart.resize();
+                }
+            }, 100);
         }, 100);
     }
 
@@ -784,6 +844,158 @@ class NodeComparisonManager {
                 this.channelChart.resize();
             }
         }, 100);
+    }
+
+    renderChannelSizeDistributions() {
+        const chartDom = document.getElementById('channelSizeDistributionsChart');
+        if (!chartDom) {
+            console.error('channelSizeDistributionsChart element not found');
+            return;
+        }
+
+        // Dispose of existing chart instance if any
+        if (this.channelSizeChart) {
+            this.channelSizeChart.dispose();
+        }
+
+        this.channelSizeChart = echarts.init(chartDom);
+
+        // Create series data - one series per node
+        const seriesData = this.nodesData.map((node, index) => {
+            // Get channels for this node
+            const nodeChannels = this.channelData.filter(channel => 
+                channel.node1_pub === node.pub_key || channel.node2_pub === node.pub_key
+            );
+
+            const capacities = nodeChannels.map(c => c.capacity);
+            const histogram = this.createChannelSizeHistogram(capacities);
+
+            return {
+                name: node.alias || `Node ${index + 1}`,
+                type: 'line',
+                data: histogram.map(bin => bin.count),
+                smooth: true,
+                symbol: 'circle',
+                symbolSize: 6,
+                lineStyle: {
+                    width: 2,
+                    color: this.getNodeColor(index)
+                },
+                itemStyle: {
+                    color: this.getNodeColor(index)
+                },
+                areaStyle: {
+                    opacity: 0.3,
+                    color: this.getNodeColor(index)
+                }
+            };
+        });
+
+        const option = {
+            backgroundColor: 'rgba(255, 250, 205, 0.1)',
+            title: {
+                text: 'Channel Size Distributions',
+                subtext: 'Combined view of channel size distributions for selected nodes',
+                left: 'center',
+                top: 10,
+                textStyle: {
+                    fontSize: 18,
+                    fontWeight: 600,
+                    color: 'var(--text-primary, #2c3e50)'
+                },
+                subtextStyle: {
+                    fontSize: 12,
+                    color: 'var(--text-secondary, #7f8c8d)'
+                }
+            },
+            tooltip: {
+                trigger: 'axis',
+                formatter: (params) => {
+                    const binIndex = params[0].dataIndex;
+                    const binLabel = this.createChannelSizeHistogram([])[binIndex]?.label || '';
+                    let tooltip = `<strong>${binLabel}</strong><br/>`;
+                    params.forEach(param => {
+                        tooltip += `${param.seriesName}: <strong>${param.value}</strong> channels<br/>`;
+                    });
+                    return tooltip;
+                }
+            },
+            legend: {
+                data: seriesData.map(s => s.name),
+                top: 'center',
+                left: 'left',
+                orient: 'vertical',
+                textStyle: {
+                    fontSize: 12,
+                    color: 'var(--text-primary, #2c3e50)'
+                }
+            },
+            grid: {
+                left: '15%',
+                right: '10%',
+                top: '15%',
+                bottom: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: this.createChannelSizeHistogram([]).map(bin => bin.label),
+                axisLabel: {
+                    rotate: 45,
+                    fontSize: 10
+                }
+            },
+            yAxis: {
+                type: 'value',
+                name: 'Channels',
+                nameTextStyle: {
+                    fontSize: 10
+                },
+                axisLabel: {
+                    fontSize: 10
+                }
+            },
+            series: seriesData
+        };
+
+        this.channelSizeChart.setOption(option);
+
+        // Resize after a short delay to ensure container is visible
+        setTimeout(() => {
+            if (this.channelSizeChart) {
+                this.channelSizeChart.resize();
+            }
+        }, 100);
+    }
+
+    createChannelSizeHistogram(channelCapacities) {
+        // Define bin edges for channel sizes (in satoshis)
+        const bins = [
+            { min: 0, max: 100000, label: '0-100K' },
+            { min: 100000, max: 1000000, label: '100K-1M' },
+            { min: 1000000, max: 10000000, label: '1M-10M' },
+            { min: 10000000, max: 100000000, label: '10M-100M' },
+            { min: 100000000, max: 1000000000, label: '100M-1B' },
+            { min: 1000000000, max: Infinity, label: '1B+' }
+        ];
+
+        const histogram = bins.map(bin => ({ ...bin, count: 0 }));
+
+        channelCapacities.forEach(capacity => {
+            const cap = Number(capacity);
+            if (!isNaN(cap)) {
+                const bin = histogram.find(b => cap >= b.min && cap < b.max);
+                if (bin) bin.count++;
+            }
+        });
+
+        return histogram;
+    }
+
+    // Helper method to get consistent colors for nodes
+    getNodeColor(index) {
+        const colors = ['#4E79A7', '#F28E2C', '#E15759'];
+        return colors[index] || colors[0];
     }
 
     // Helper method to get colors for channel categories
@@ -1082,6 +1294,9 @@ class NodeComparisonManager {
             }
             if (this.channelChart) {
                 this.channelChart.resize();
+            }
+            if (this.channelSizeChart) {
+                this.channelSizeChart.resize();
             }
         }, 50);
     }

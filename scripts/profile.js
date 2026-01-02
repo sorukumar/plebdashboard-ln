@@ -182,6 +182,11 @@ class NodeProfileManager {
         // Removed capacity segment assignment
         safeSet('nodeCapTier', node.node_cap_tier || '-');
         // Category Counts formatting (multi-line)
+        const categoryDescriptions = {
+            Freeway: "> 1BTC",
+            Highway: "> 5M sats",
+            "My Way": "all other"
+        };
         const categoryCountsEl = document.getElementById('categoryCounts');
         if (categoryCountsEl) {
             let formatted = '-';
@@ -196,7 +201,7 @@ class NodeProfileManager {
                 }
                 if (obj && typeof obj === 'object') {
                     formatted = Object.entries(obj)
-                        .map(([k, v]) => `${k}: ${v}`)
+                        .map(([k, v]) => `${k}: ${v} <small>(${categoryDescriptions[k]})</small>`)
                         .join('<br>');
                 }
             }
