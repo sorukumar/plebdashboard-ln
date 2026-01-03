@@ -1001,9 +1001,9 @@ class NodeComparisonManager {
     // Helper method to get colors for channel categories
     getCategoryColor(category) {
         const colorMap = {
-            'freeway': '#4E79A7',  // Blue
-            'highway': '#F28E2C',  // Orange
-            'myway': '#E15759',    // Red
+            'freeway': '#8CB369',  // soft sage green
+            'highway': '#D4A574',  // warm beige/tan
+            'myway': '#A8DADC',    // pale cyan
             'default': '#76B7B2'   // Teal for unknown categories
         };
         return colorMap[category.toLowerCase()] || colorMap.default;
