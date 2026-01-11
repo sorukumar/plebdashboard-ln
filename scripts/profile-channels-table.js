@@ -226,7 +226,7 @@ class ChannelsTableManager {
         console.log('ChannelsTableManager: Container found, rendering table HTML...');
 
         const tableHTML = `
-            <div class="channels-table-controls">
+            <div class="table-controls">
                 <div class="search-container">
                     <input type="text" id="channelsSearch" placeholder="Search by alias or pubkey..." class="search-input">
                     <i class="fas fa-search search-icon"></i>
@@ -243,7 +243,7 @@ class ChannelsTableManager {
                 </div>
             </div>
             <div class="table-wrapper">
-                <table class="channels-table" id="channelsTable">
+                <table class="data-table" id="channelsTable">
                     <thead>
                         <tr>
                             <th data-sort="peer_alias" class="sortable">Peer <i class="fas fa-sort"></i></th>
@@ -290,12 +290,12 @@ class ChannelsTableManager {
             // Status indicators
             const myStatus = myPolicy.disabled ? 'Disabled' : 'Active';
             const peerStatus = peerPolicy.disabled ? 'Disabled' : 'Active';
-
+            
             return `
                 <tr data-channel-id="${channel.short_channel_id || 'unknown'}" class="channel-row">
                     <td>
-                        <div class="peer-info-compact" title="${peerPubkey || 'Unknown'} - Click to copy">
-                            <span class="peer-alias-main">${peerAlias}</span>
+                        <div class="peer-info-compact" title="${peerPubkey || 'Unknown'}">
+                            ${peerPubkey ? `<a href="profile.html?node=${encodeURIComponent(peerPubkey)}" class="peer-link">${peerAlias}</a>` : peerAlias}
                         </div>
                     </td>
                     <td class="capacity-cell">${this.formatCapacity(channel.capacity)} sats</td>
@@ -421,23 +421,6 @@ class ChannelsTableManager {
                     this.updatePagination();
                     this.updateTable();
                 }
-            }
-        });
-
-        // Peer info click to copy
-        document.addEventListener('click', (e) => {
-            if (e.target.closest('.peer-info-compact')) {
-                const peerInfo = e.target.closest('.peer-info-compact');
-                const pubkey = peerInfo.getAttribute('title').split(' - ')[0];
-                navigator.clipboard.writeText(pubkey).then(() => {
-                    const originalTitle = peerInfo.getAttribute('title');
-                    peerInfo.setAttribute('title', 'Copied!');
-                    setTimeout(() => {
-                        peerInfo.setAttribute('title', originalTitle);
-                    }, 2000);
-                }).catch(err => {
-                    console.error('Failed to copy pubkey:', err);
-                });
             }
         });
 

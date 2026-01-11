@@ -8,6 +8,7 @@ class NodeProfileManager {
         this.chartManager = null;
         this.channelsTableManager = null;
         this.connectAddress = null;
+        this.nodeTypes = [];
         this.init();
     }
 
@@ -29,6 +30,9 @@ class NodeProfileManager {
 
     async loadNodeData() {
         try {
+            // Load node types first
+            await this.loadNodeTypes();
+            
             // Only use node_profile.parquet
             const profileResponse = await fetch('data/node_profile.parquet');
             if (!profileResponse.ok) throw new Error(`HTTP ${profileResponse.status}`);
@@ -44,6 +48,17 @@ class NodeProfileManager {
         } catch (error) {
             console.error('Error loading node data:', error);
             this.showError('Failed to load node data: ' + error.message);
+        }
+    }
+
+    async loadNodeTypes() {
+        try {
+            const response = await fetch('data/ln_node_types.json');
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            this.nodeTypes = await response.json();
+        } catch (error) {
+            console.warn('Failed to load node types:', error);
+            this.nodeTypes = [];
         }
     }
 
@@ -89,6 +104,13 @@ class NodeProfileManager {
                             node.pub_key === this.nodeId ||
                             (node.alias && node.alias.toLowerCase() === this.nodeId.toLowerCase())
                         );
+                        if (this.nodeData) {
+                            // Override node_type from ln_node_types.json if available
+                            const typeEntry = this.nodeTypes.find(t => t.pub_key === this.nodeData.pub_key);
+                            if (typeEntry) {
+                                this.nodeData.node_type = typeEntry.node_type;
+                            }
+                        }
                         if (!this.nodeData) {
                             console.warn('No match found for nodeId in pub_key or alias');
                         }

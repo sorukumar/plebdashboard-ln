@@ -25,7 +25,7 @@ ln-nodeprofile-rank/
 │   ├── profile.js
 │   ├── profile-channels.js
 │   ├── profile-channels-table.js
-│   ├── table.js
+│   ├── node-rank.js
 │   ├── node-comparison.js
 │   ├── node-explorer.js
 │   └── channel-explorer.js
@@ -33,7 +33,7 @@ ln-nodeprofile-rank/
 └── styles/
     ├── main.css
     ├── profile.css
-    ├── table.css
+    ├── node-rank.css
     ├── node-comparison.css
     ├── node-explorer.css
     └── components.css
@@ -48,7 +48,7 @@ ln-nodeprofile-rank/
 - **index.html**  
   Homepage: search bar (alias/pubkey), trending nodes, navigation cards (Rankings, Graph Viz, Explorer), featured nodes (from JSON), all dynamic via homepage.js.
 - **prank.html**  
-  Rankings table: search, sort, filter, paginate. Table updates live. All logic in table.js.
+  Rankings table: search, sort, filter, paginate. Table updates live. All logic in node-rank.js.
 - **profile.html**  
   Node profile: stats, rankings, metrics, tabs (Overview, Rankings, Channels, Channel Details), copy pubkey, all dynamic. Uses profile.js, profile-channels.js, profile-channels-table.js.
 - **node-comparison.html**  
@@ -99,7 +99,7 @@ ln-nodeprofile-rank/
   Load/process channel data for node, prep for tabs/visuals.
 - **profile-channels-table.js**  
   Render channel table: sort, filter, paginate, format (fees, HTLC, status), table events.
-- **table.js**  
+- **node-rank.js**  
   Rankings table: load data, render, sort, filter, paginate, search, loading/error UI.
 - **node-comparison.js**  
   Node Comparison: load node data for 2-3 nodes, search with autocomplete, render node cards, display radar chart comparing rankings across dimensions.
@@ -118,8 +118,8 @@ ln-nodeprofile-rank/
 - **profile.css**  
   Styles for the node profile page.
 
-- **table.css**  
-  Styles for the rankings table.
+- **node-rank.css**  
+  Styles for the rankings table and channel explorer table.
 
 - **node-comparison.css**  
   Styles for the node comparison page.
@@ -145,7 +145,7 @@ ln-nodeprofile-rank/
     - Handles tab navigation, copy, error states
 
 - **prank.html**  
-  → `table.js`  
+  → `node-rank.js`  
     - Loads and displays node rankings table
 
 - **node-comparison.html**  
@@ -191,7 +191,7 @@ ln-nodeprofile-rank/
   ↓
 [profile.html?node=...] --(profile view)--> [profile.js] --(fetch)--> [node_profile.parquet] (fallback: node_rank.parquet)
   ↓
-[prank.html] --(table view)--> [table.js] --(fetch)--> [node_rank.parquet]
+[prank.html] --(table view)--> [node-rank.js] --(fetch)--> [node_rank.parquet]
   ↓
 [node-comparison.html] --(comparison view)--> [node-comparison.js] --(fetch)--> [node_profile.parquet] (fallback: node_rank.parquet)
   ↓

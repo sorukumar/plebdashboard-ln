@@ -307,15 +307,16 @@ class DataTableManager {
                 // Special handling for alias column - make it clickable
                 if (key === 'alias') {
                     const pubkey = row['pub_key'];
+                    const displayText = value || (pubkey ? pubkey.substring(0, 8) + '...' : '-');
                     td.classList.add('alias-cell');
-                    if (pubkey && value) {
+                    if (pubkey) {
                         td.innerHTML = `
-                            <a href="profile.html?node=${encodeURIComponent(pubkey)}" class="alias-link" title="View ${value}'s profile">
-                                ${value}
+                            <a href="profile.html?node=${encodeURIComponent(pubkey)}" class="alias-link" title="View profile">
+                                ${displayText}
                             </a>
                         `;
                     } else {
-                        td.textContent = value || '-';
+                        td.textContent = displayText;
                     }
                 }
                 // Special handling for pubkey column

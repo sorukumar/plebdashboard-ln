@@ -454,6 +454,22 @@ class ChannelExplorerManager {
                     td.innerHTML = this.formatFeesCompact(channel.node1_policy_parsed);
                 } else if (key === 'node2_fees') {
                     td.innerHTML = this.formatFeesCompact(channel.node2_policy_parsed);
+                } else if (key === 'status') {
+                    const [node1Part, node2Part] = value.split(' | ');
+                    const node1Status = node1Part.split(': ')[1];
+                    const node2Status = node2Part.split(': ')[1];
+                    td.innerHTML = `
+                        <div class="status-breakdown">
+                            <div class="status-row ${node1Status === 'Active' ? 'active' : node1Status === 'Disabled' ? 'disabled' : ''}">
+                                <span class="status-label">Node 1:</span>
+                                <span class="status-value">${node1Status}</span>
+                            </div>
+                            <div class="status-row ${node2Status === 'Active' ? 'active' : node2Status === 'Disabled' ? 'disabled' : ''}">
+                                <span class="status-label">Node 2:</span>
+                                <span class="status-value">${node2Status}</span>
+                            </div>
+                        </div>
+                    `;
                 } else {
                     td.textContent = value || '-';
                 }

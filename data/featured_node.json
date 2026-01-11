@@ -1,34 +1,46 @@
 [
   {
     "pub_key": "03864ef025fde8fb587d989186ce6a4a186895ee44a926bfc370e2c366597a3f8f",
-    "comment": "One of the most well-connected routing nodes with excellent uptime and reliability"
+    "comment": "ACINQ's flagship routing node, powering the Phoenix wallet and driving Lightning innovation with top-tier connectivity"
   },
   {
     "pub_key": "0225c2a44be98ae923118e92c5b58033a0fd7dd3135be99ee1047ec9d30291dc5d",
     "comment": "The node that powers Plebdashboard. Maintained for research and community service"
   },
   {
-    "pub_key": "0391904d140fdf88d19423513945a5fcc49c606521b65a85f6d6fe46ebdd1c7665",
-    "comment": "Emerging node with strategic channel placement and growing network presence."
-  },
-  {
     "pub_key": "03037dc08e9ac63b82581f79b662a4d0ceca8a8ca162b1af3551595b8f2d97b70a",
-    "comment": "Professional routing node with consistent performance metrics"
+    "comment": "River Financial's routing node, specializing in Lightning Service Provider (LSP) solutions for seamless onboarding"
   },
   {
-    "pub_key": "0217890e3aad8d35bc054f43acc00084b25229ecff0ab68debd82883ad65ee8266",
-    "comment": "Community-focused node supporting Lightning Network adoption"
+    "pub_key": "026f46207fd290a33cbd86e29b3ad0a47cdd44ab9aa5267cde66483e10aa9d3180",
+    "comment": "Major routing node with extensive network and strong community support"
   },
   {
     "pub_key": "03a1f3afd646d77bdaf545cceaf079bab6057eae52c6319b63b5803d0989d6a72f",
-    "comment": "One of the biggest crypto exchange that adopted Lightning"
+    "comment": "Binance's main Lightning node, facilitating high-volume crypto trading and withdrawals on the network"
+  },
+  {
+    "pub_key": "03e086e590f2255a7423cea5dc2b8fbcaffa3d8044c26dbea84728ea4b4648e41a",
+    "comment": "Active community node offering reliable routing and Reddit support"
   },
   {
     "pub_key": "03434a39cd9a537c852fc8fb72454086d726f9111e9f730cef4985c39c11fae944",
-    "comment": "One of the oldest Node"
+    "comment": "One of the oldest node"
   },
   {
     "pub_key": "027100442c3b79f606f80f322d98d499eefcb060599efc5d4ecb00209c2cb54190",
-    "comment": "Cash app, they many more nodes. Looking at LN viz, we can figure out some"
+    "comment": "Cash App's routing node, part of Square's extensive Lightning infrastructure powering millions of transactions"
+  },
+  {
+    "pub_key": "0217890e3aad8d35bc054f43acc00084b25229ecff0ab68debd82883ad65ee8266",
+    "comment": "1ML.com's Lightning node, providing comprehensive network statistics and analysis since 2018"
+  },
+  {
+    "pub_key": "03cde60a6323f7122d5178255766e38114b4722ede08f7c9e0c5df9b912cc201d6",
+    "comment": "Bitfinex's primary Lightning node, bridging institutional and retail liquidity on the network"
+  },
+  {
+    "pub_key": "03b465d6fcd7305c9fbfac523ec6c4a179756ad03e0400ed220ee303161bedbbf4",
+    "comment": "Predyx.com's Lightning node, powering decentralized prediction markets for betting on future events"
   }
 ]

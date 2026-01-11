@@ -172,6 +172,24 @@
     gap: 1rem;
 }
 
+/* Node type badge using primary accent */
+.node-type-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-top: 0.75rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 999px;
+    background: #fff7f2;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.node-type-badge i {
+    font-size: 0.75rem;
+}
+
 /* Quick Stats Grid */
 .quick-stats-grid {
     display: grid;
@@ -476,309 +494,6 @@
     line-height: 1.4;
 }
 
-/* Channels Table Controls */
-.channels-table-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-    flex-wrap: wrap;
-    gap: 1rem;
-}
-
-.table-info {
-    color: var(--text-secondary);
-    font-size: 0.9rem;
-    white-space: nowrap;
-}
-
-.table-wrapper {
-    overflow-x: auto;
-    border: 1px solid var(--border-color);
-    border-radius: 8px;
-    background: var(--bg-primary);
-}
-
-.channels-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 0.85rem;
-    min-width: 1200px;
-}
-
-.channels-table thead {
-    background: var(--bg-secondary);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-}
-
-.channels-table th {
-    padding: 1rem 0.75rem;
-    text-align: left;
-    font-weight: 600;
-    color: var(--text-primary);
-    border-bottom: 2px solid var(--border-color);
-    white-space: nowrap;
-    user-select: none;
-}
-
-.channels-table th.sortable {
-    cursor: pointer;
-    transition: background-color 0.2s ease;
-}
-
-.channels-table th.sortable:hover {
-    background: var(--bg-tertiary);
-}
-
-.channels-table th i {
-    margin-left: 0.5rem;
-    opacity: 0.6;
-    transition: all 0.2s ease;
-}
-
-.channels-table th.sortable:hover i {
-    opacity: 1;
-}
-
-.channels-table tbody tr {
-    border-bottom: 1px solid var(--border-color);
-    transition: background-color 0.2s ease;
-}
-
-.channels-table tbody tr:hover {
-    background: var(--bg-secondary);
-}
-
-.channels-table tbody tr:last-child {
-    border-bottom: none;
-}
-
-.channels-table td {
-    padding: 0.875rem 0.75rem;
-    vertical-align: top;
-    color: var(--text-primary);
-}
-
-/* Peer Info */
-.peer-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-    min-width: 120px;
-}
-
-.peer-alias {
-    font-weight: 500;
-    color: var(--text-primary);
-    cursor: help;
-}
-
-.peer-pubkey {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-    font-family: 'Courier New', monospace;
-}
-
-.peer-info-compact {
-    display: flex;
-    align-items: center;
-    min-width: 80px;
-    max-width: 120px;
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.peer-info-compact:hover {
-    background: var(--bg-secondary);
-    border-radius: 4px;
-    padding: 0.2rem 0.4rem;
-}
-
-.peer-alias-main {
-    font-weight: 500;
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    max-width: 100%;
-}
-
-.capacity-cell {
-    font-weight: 500;
-    color: var(--accent-color);
-    text-align: right;
-    white-space: nowrap;
-}
-
-/* Fee Breakdown */
-.fees-cell {
-    padding: 0.5rem;
-    max-width: 200px;
-}
-
-.fee-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.8rem;
-}
-
-.fee-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.1rem 0;
-}
-
-.fee-label {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    min-width: 70px;
-}
-
-.fee-value {
-    color: var(--text-primary);
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-align: right;
-}
-
-.disabled-text {
-    color: var(--text-muted, #999);
-    font-style: italic;
-    font-size: 0.8rem;
-}
-
-/* HTLC Breakdown */
-.htlc-cell {
-    padding: 0.5rem;
-    max-width: 140px;
-}
-
-.htlc-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.8rem;
-}
-
-.htlc-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.1rem 0;
-}
-
-.htlc-label {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    min-width: 30px;
-}
-
-.htlc-value {
-    color: var(--text-primary);
-    font-family: 'Courier New', monospace;
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-align: right;
-}
-
-/* Status Breakdown */
-.status-cell {
-    padding: 0.5rem;
-    max-width: 120px;
-}
-
-.status-breakdown {
-    display: flex;
-    flex-direction: column;
-    gap: 0.25rem;
-    font-size: 0.8rem;
-}
-
-.status-row {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 0.1rem 0;
-}
-
-.status-row.active .status-value {
-    color: #28a745;
-    font-weight: 500;
-}
-
-.status-row.disabled .status-value {
-    color: #dc3545;
-    font-weight: 500;
-}
-
-.status-label {
-    color: var(--text-secondary);
-    font-size: 0.75rem;
-    min-width: 35px;
-}
-
-.status-value {
-    font-size: 0.75rem;
-    font-weight: 500;
-    text-align: right;
-}
-
-/* Error Message */
-.error-message {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 3rem;
-    color: var(--error-color);
-    text-align: center;
-}
-
-.error-message i {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-}
-
-/* Page Size Select */
-.page-size-select {
-    padding: 0.5rem;
-    border: 1px solid var(--border-color);
-    border-radius: 4px;
-    background: var(--bg-primary);
-    color: var(--text-primary);
-    font-size: 0.85rem;
-    cursor: pointer;
-}
-
-.page-size-select:focus {
-    outline: none;
-    border-color: var(--accent-color);
-}
-
-/* Node type badge using primary accent */
-.node-type-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.35rem;
-    margin-top: 0.75rem;
-    padding: 0.25rem 0.7rem;
-    border-radius: 999px;
-    background: #fff7f2;
-    color: var(--primary);
-    font-size: 0.8rem;
-    font-weight: 500;
-}
-
-.node-type-badge i {
-    font-size: 0.75rem;
-}
-
 /* ==========================================================================
    RESPONSIVE DESIGN
    ========================================================================== */
@@ -841,53 +556,6 @@
         text-align: left;
     }
 
-    .channels-table-controls {
-        flex-direction: column;
-        align-items: stretch;
-        gap: 0.5rem;
-    }
-    
-    .table-info {
-        text-align: center;
-    }
-    
-    .channels-table {
-        font-size: 0.75rem;
-        min-width: 1000px;
-    }
-    
-    .channels-table th,
-    .channels-table td {
-        padding: 0.5rem 0.4rem;
-    }
-    
-    .peer-info-compact {
-        min-width: 60px;
-        max-width: 100px;
-    }
-    
-    .peer-alias-main {
-        font-size: 0.75rem;
-    }
-    
-    .fee-breakdown,
-    .htlc-breakdown,
-    .status-breakdown {
-        font-size: 0.7rem;
-    }
-    
-    .fee-label,
-    .htlc-label,
-    .status-label {
-        font-size: 0.65rem;
-    }
-    
-    .fee-value,
-    .htlc-value,
-    .status-value {
-        font-size: 0.65rem;
-    }
-
     .selection-form {
         flex-direction: column;
         align-items: stretch;
@@ -935,4 +603,21 @@
     .channels-table td {
         padding: 0.4rem 0.3rem;
     }
+}
+
+/* Peer Link */
+.peer-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    display: inline-block;
+    padding: 0.25rem 0;
+    border-bottom: 2px solid transparent;
+}
+
+.peer-link:hover {
+    color: var(--primary);
+    border-bottom-color: var(--primary);
+    transform: translateX(2px);
 }

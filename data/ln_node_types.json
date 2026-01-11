@@ -418,5 +418,10 @@
         "pub_key":"034d7f4bbbd6c1c1d8fbe0a42dd1f59e10b66540c6872dfcaa095d8d5cffebcf46",
         "alias":"strike [migrating to Strike]",
         "node_type":"Wallet,Exchange,Payment"
+    },
+    {
+        "pub_key":"026f46207fd290a33cbd86e29b3ad0a47cdd44ab9aa5267cde66483e10aa9d3180",
+        "alias":"Authenticity",
+        "node_type":"Routing"
     }
 ]
