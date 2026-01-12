@@ -203,7 +203,7 @@ class ChannelExplorerManager {
     formatMsat(msat) {
         if (msat === null || msat === undefined) return '0';
         const num = Number(msat);
-        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+        if (num >= 1000000) return `${(num / 1000000).toFixed(0)}M`;
         if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
         return num.toLocaleString();
     }
@@ -379,8 +379,8 @@ class ChannelExplorerManager {
         
         // Define tooltips for technical columns
         const columnTooltips = {
-            'node1_fees': 'Fees charged by this node for routing',
-            'node2_fees': 'Fees charged by the peer node for routing',
+            'node1_fees': 'Policy information for Node 1 (fees, HTLC limits, etc.)',
+            'node2_fees': 'Policy information for Node 2 (fees, HTLC limits, etc.)',
             'status': 'Channel status from each node\'s perspective'
         };
         
@@ -446,7 +446,7 @@ class ChannelExplorerManager {
                 } else if (key === 'birth_tx') {
                     const channelId = channel.channel_id;
                     if (channelId) {
-                        td.innerHTML = `<a href="https://mempool.space/lightning/channel/${channelId}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${value || 'N/A'}</a>`;
+                        td.innerHTML = `<a href="https://mempool.space/lightning/channel/${channelId}" target="_blank" rel="noopener noreferrer" class="alias-link">${value || 'N/A'}</a>`;
                     } else {
                         td.textContent = value || 'N/A';
                     }
@@ -492,9 +492,9 @@ class ChannelExplorerManager {
             case 'birth_tx':
                 return 'BIRTH TX';
             case 'node1_fees':
-                return 'NODE 1<br>FEES';
+                return 'NODE 1<br>POLICY';
             case 'node2_fees':
-                return 'NODE 2<br>FEES';
+                return 'NODE 2<br>POLICY';
             case 'status':
                 return 'STATUS';
             default:

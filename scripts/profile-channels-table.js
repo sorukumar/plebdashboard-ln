@@ -48,7 +48,14 @@ class ChannelsTableManager {
                             
                             const allChannels = result.map(row => {
                                 const obj = {};
-                                columns.forEach((col, i) => obj[col] = row[i]);
+                                columns.forEach((col, i) => {
+                                    let val = row[i];
+                                    // Trim pubkeys and aliases to handle whitespace in data
+                                    if (col.includes('pub') || col.includes('alias')) {
+                                        val = val ? String(val).trim() : '';
+                                    }
+                                    obj[col] = val;
+                                });
                                 return obj;
                             });
                             
@@ -96,7 +103,7 @@ class ChannelsTableManager {
 
     getChannelColumns() {
         return [
-            'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 'alias_1', 'alias_2', 'birth_tx'
+            'node1_pub', 'node2_pub', 'capacity', 'node1_policy', 'node2_policy', 'alias_1', 'alias_2', 'birth_tx', 'channel_id'
         ];
     }
 
@@ -154,7 +161,7 @@ class ChannelsTableManager {
     formatMsat(msat) {
         if (msat === null || msat === undefined) return '0';
         const num = Number(msat);
-        if (num >= 1000000) return `${(num / 1000000).toFixed(1)}M`;
+        if (num >= 1000000) return `${(num / 1000000).toFixed(0)}M`;
         if (num >= 1000) return `${(num / 1000).toFixed(0)}K`;
         return num.toLocaleString();
     }
@@ -164,7 +171,7 @@ class ChannelsTableManager {
         return Number(ppm).toLocaleString();
     }
 
-    formatFeesCompact(policy) {
+    formatPolicyCompact(policy) {
         if (policy.disabled) {
             return '<span class="disabled-text">Channel Disabled</span>';
         }
@@ -187,24 +194,17 @@ class ChannelsTableManager {
                     <span class="fee-label">Inbound Rate:</span>
                     <span class="fee-value">${this.formatPPM(policy.inbound_fee_rate_milli_msat)} ppm</span>
                 </div>
-            </div>
-        `;
-    }
-
-    formatHTLCCompact(policy) {
-        if (policy.disabled) {
-            return '<span class="disabled-text">N/A</span>';
-        }
-        
-        return `
-            <div class="htlc-breakdown">
-                <div class="htlc-row">
-                    <span class="htlc-label">Min:</span>
-                    <span class="htlc-value">${this.formatMsat(policy.min_htlc)} msat</span>
+                <div class="fee-row">
+                    <span class="fee-label">Min HTLC:</span>
+                    <span class="fee-value">${this.formatMsat(policy.min_htlc)} msat</span>
                 </div>
-                <div class="htlc-row">
-                    <span class="htlc-label">Max:</span>
-                    <span class="htlc-value">${this.formatMsat(policy.max_htlc_msat)} msat</span>
+                <div class="fee-row">
+                    <span class="fee-label">Max HTLC:</span>
+                    <span class="fee-value">${this.formatMsat(policy.max_htlc_msat)} msat</span>
+                </div>
+                <div class="fee-row">
+                    <span class="fee-label">Timelock Δ:</span>
+                    <span class="fee-value">${policy.time_lock_delta || 0}</span>
                 </div>
             </div>
         `;
@@ -223,9 +223,10 @@ class ChannelsTableManager {
         // Calculate pagination
         this.updatePagination();
 
-        console.log('ChannelsTableManager: Container found, rendering table HTML...');
+        console.log('ChannelsTableManager: Container found, rendering table...');
 
-        const tableHTML = `
+        // Create table controls HTML
+        const controlsHTML = `
             <div class="table-controls">
                 <div class="search-container">
                     <input type="text" id="channelsSearch" placeholder="Search by alias or pubkey..." class="search-input">
@@ -238,33 +239,51 @@ class ChannelsTableManager {
                         <option value="100" ${this.pageSize === 100 ? 'selected' : ''}>100 per page</option>
                     </select>
                 </div>
-                <div class="table-info">
-                    <span id="channelsCount">${this.filteredData.length}</span> channels
-                </div>
             </div>
-            <div class="table-wrapper">
-                <table class="data-table" id="channelsTable">
-                    <thead>
-                        <tr>
-                            <th data-sort="peer_alias" class="sortable">Peer <i class="fas fa-sort"></i></th>
-                            <th data-sort="capacity" class="sortable">Capacity <i class="fas fa-sort"></i></th>
-                            <th class="fees-column">My Fees</th>
-                            <th class="fees-column">Peer Fees</th>
-                            <th class="htlc-column">My HTLC Limits</th>
-                            <th class="htlc-column">Peer HTLC Limits</th>
-                            <th class="status-column">Status</th>
-                        </tr>
-                    </thead>
-                    <tbody id="channelsTableBody">
-                        ${this.generateTableRows(nodePubKey)}
-                    </tbody>
-                </table>
-            </div>
-            ${this.generatePaginationControls()}
         `;
 
-        container.innerHTML = tableHTML;
-        console.log('ChannelsTableManager: Table HTML set, setting up event listeners...');
+        // Create table wrapper
+        const tableWrapper = document.createElement('div');
+        tableWrapper.className = 'table-wrapper';
+
+        // Create table element
+        const table = document.createElement('table');
+        table.className = 'data-table';
+        table.id = 'channelsTable';
+
+        // Create thead with innerHTML for simplicity
+        const thead = document.createElement('thead');
+        thead.innerHTML = `
+            <tr>
+                <th data-sort="peer_alias" class="sortable">Peer <i class="fas fa-sort"></i></th>
+                <th data-sort="capacity" class="sortable">Capacity <i class="fas fa-sort"></i></th>
+                <th data-sort="birth_tx" class="sortable">Birth TX <i class="fas fa-sort"></i></th>
+                <th class="fees-column">My Policy</th>
+                <th class="fees-column">Peer Policy</th>
+                <th class="status-column">Status</th>
+            </tr>
+        `;
+        table.appendChild(thead);
+
+        // Attach sorting event listeners to sortable headers
+        thead.querySelectorAll('th.sortable').forEach(th => {
+            th.addEventListener('click', () => this.sortData(th.dataset.sort));
+        });
+
+        // Create tbody
+        const tbody = document.createElement('tbody');
+        tbody.id = 'channelsTableBody';
+        tbody.innerHTML = this.generateTableRows(nodePubKey);
+        table.appendChild(tbody);
+
+        tableWrapper.appendChild(table);
+
+        // Set container content
+        container.innerHTML = controlsHTML;
+        container.appendChild(tableWrapper);
+        container.insertAdjacentHTML('beforeend', this.generatePaginationControls());
+
+        console.log('ChannelsTableManager: Table created with event listeners attached...');
         this.setupEventListeners();
         console.log('ChannelsTableManager: Table rendering complete');
     }
@@ -274,14 +293,14 @@ class ChannelsTableManager {
             const isNode1 = channel.node1_pub === nodePubKey;
             
             // Add null checks and ensure we have string values
-            const node1Pub = channel.node1_pub ? String(channel.node1_pub) : '';
-            const node2Pub = channel.node2_pub ? String(channel.node2_pub) : '';
-            const alias1 = channel.alias_1 ? String(channel.alias_1) : '';
-            const alias2 = channel.alias_2 ? String(channel.alias_2) : '';
+            const node1Pub = channel.node1_pub ? String(channel.node1_pub).trim() : '';
+            const node2Pub = channel.node2_pub ? String(channel.node2_pub).trim() : '';
+            const alias1 = channel.alias_1 ? String(channel.alias_1).trim() : '';
+            const alias2 = channel.alias_2 ? String(channel.alias_2).trim() : '';
             
             const peerAlias = isNode1 
-                ? (alias2 || (node2Pub ? node2Pub.slice(0, 8) + '...' : 'Unknown'))
-                : (alias1 || (node1Pub ? node1Pub.slice(0, 8) + '...' : 'Unknown'));
+                ? (alias2 || (node2Pub ? node2Pub.substring(0, 8) + '...' : '-'))
+                : (alias1 || (node1Pub ? node1Pub.substring(0, 8) + '...' : '-'));
             const peerPubkey = isNode1 ? node2Pub : node1Pub;
             
             const myPolicy = this.parsePolicy(isNode1 ? channel.node1_policy : channel.node2_policy);
@@ -292,17 +311,18 @@ class ChannelsTableManager {
             const peerStatus = peerPolicy.disabled ? 'Disabled' : 'Active';
             
             return `
-                <tr data-channel-id="${channel.short_channel_id || 'unknown'}" class="channel-row">
+                <tr data-channel-id="${channel.channel_id || 'unknown'}" class="channel-row">
                     <td>
-                        <div class="peer-info-compact" title="${peerPubkey || 'Unknown'}">
-                            ${peerPubkey ? `<a href="profile.html?node=${encodeURIComponent(peerPubkey)}" class="peer-link">${peerAlias}</a>` : peerAlias}
+                        <div class="peer-info-compact">
+                            ${peerPubkey ? `<a href="profile.html?node=${encodeURIComponent(peerPubkey)}" class="peer-link" title="View profile">${peerAlias}</a>` : peerAlias}
                         </div>
                     </td>
                     <td class="capacity-cell">${this.formatCapacity(channel.capacity)} sats</td>
-                    <td class="fees-cell">${this.formatFeesCompact(myPolicy)}</td>
-                    <td class="fees-cell">${this.formatFeesCompact(peerPolicy)}</td>
-                    <td class="htlc-cell">${this.formatHTLCCompact(myPolicy)}</td>
-                    <td class="htlc-cell">${this.formatHTLCCompact(peerPolicy)}</td>
+                    <td class="birth-tx-cell">
+                        ${channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" class="alias-link">${channel.birth_tx || 'N/A'}</a>` : channel.birth_tx || 'N/A'}
+                    </td>
+                    <td class="fees-cell">${this.formatPolicyCompact(myPolicy)}</td>
+                    <td class="fees-cell">${this.formatPolicyCompact(peerPolicy)}</td>
                     <td class="status-cell">
                         <div class="status-breakdown">
                             <div class="status-row ${myPolicy.disabled ? 'disabled' : 'active'}">
@@ -424,14 +444,7 @@ class ChannelsTableManager {
             }
         });
 
-        // Sorting functionality
-        const sortableHeaders = document.querySelectorAll('.channels-table th.sortable');
-        sortableHeaders.forEach(header => {
-            header.addEventListener('click', () => {
-                const column = header.getAttribute('data-sort');
-                this.sortData(column);
-            });
-        });
+        // Sorting functionality is now handled directly in renderTable
     }
 
     filterData() {
@@ -444,7 +457,7 @@ class ChannelsTableManager {
                     channel.alias_2,
                     channel.node1_pub,
                     channel.node2_pub,
-                    channel.short_channel_id
+                    channel.channel_id
                 ].join(' ').toLowerCase();
                 
                 return searchableText.includes(this.searchTerm);
@@ -464,6 +477,8 @@ class ChannelsTableManager {
             this.sortDirection = 'asc';
         }
 
+        const multiplier = this.sortDirection === 'desc' ? -1 : 1;
+
         this.filteredData.sort((a, b) => {
             let aVal, bVal;
 
@@ -476,6 +491,10 @@ class ChannelsTableManager {
                     aVal = Number(a.capacity) || 0;
                     bVal = Number(b.capacity) || 0;
                     break;
+                case 'birth_tx':
+                    aVal = String(a.birth_tx || '');
+                    bVal = String(b.birth_tx || '');
+                    return aVal.localeCompare(bVal) * multiplier;
                 default:
                     aVal = a[column] || '';
                     bVal = b[column] || '';
@@ -485,7 +504,7 @@ class ChannelsTableManager {
             if (aVal < bVal) result = -1;
             else if (aVal > bVal) result = 1;
 
-            return this.sortDirection === 'desc' ? -result : result;
+            return result * multiplier;
         });
 
         this.updateSortIcons();
@@ -495,13 +514,13 @@ class ChannelsTableManager {
 
     updateSortIcons() {
         // Reset all sort icons
-        document.querySelectorAll('.channels-table th.sortable i').forEach(icon => {
+        document.querySelectorAll('.data-table th.sortable i').forEach(icon => {
             icon.className = 'fas fa-sort';
         });
 
         // Update active sort icon
         if (this.sortColumn) {
-            const activeHeader = document.querySelector(`[data-sort="${this.sortColumn}"] i`);
+            const activeHeader = document.querySelector(`.data-table [data-sort="${this.sortColumn}"] i`);
             if (activeHeader) {
                 activeHeader.className = this.sortDirection === 'asc' ? 'fas fa-sort-up' : 'fas fa-sort-down';
             }
