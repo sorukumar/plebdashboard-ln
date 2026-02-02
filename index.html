@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plebdashboard – Lightning Node Analytics & Rankings</title>
-    
+
     <!-- Bitcoin Data Labs styles -->
     <link rel="stylesheet" href="https://sorukumar.github.io/Bitcoin-Data-Labs/styles/styles.css">
     <!-- Font Awesome for icons -->
@@ -13,18 +14,23 @@
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/components.css">
 </head>
-<body>
+
+<body class="has-fixed-header">
+
     <!-- Bitcoin Data Labs Header -->
     <div id="header"></div>
-    
+
     <div class="main-content">
         <!-- Hero Search Section -->
         <div class="hero-search-section">
             <div class="search-box-wrapper">
                 <h1>Find Lightning Network Nodes</h1>
-                <p class="search-description">Search by node alias or public key to explore detailed profiles and rankings</p>
+                <p class="search-description">Search by node alias or public key to explore detailed profiles and
+                    rankings</p>
                 <div class="search-input-container">
-                    <input type="text" id="nodeSearchInput" placeholder="Search by node alias or pubkey..." class="search-input-hero" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                    <input type="text" id="nodeSearchInput" placeholder="Search by node alias or pubkey..."
+                        class="search-input-hero" autocomplete="off" autocorrect="off" autocapitalize="off"
+                        spellcheck="false">
                     <button id="searchButton" class="search-button">
                         <i class="fas fa-search"></i>
                     </button>
@@ -68,21 +74,22 @@
         <section class="featured-nodes-section">
             <div class="section-header">
                 <h2>Featured Nodes</h2>
-                <p>Handpicked Lightning Network nodes showcasing excellence in routing, reliability, and network contribution</p>
+                <p>Handpicked Lightning Network nodes showcasing excellence in routing, reliability, and network
+                    contribution</p>
             </div>
-            
+
             <div id="loadingState" class="loading-state">
                 <div class="loading-content">
                     <i class="fas fa-spinner fa-spin"></i>
                     <p>Loading featured nodes...</p>
                 </div>
             </div>
-            
+
             <div id="featuredNodesContainer" class="featured-nodes-container" style="display: none;">
                 <div id="featuredNodesGrid" class="featured-nodes-grid">
                     <!-- Featured nodes will be populated here -->
                 </div>
-                
+
                 <!-- Standardized Pagination -->
                 <div id="featuredNodesPagination" class="pagination-container" style="display: none;">
                     <div class="pagination-info">
@@ -105,7 +112,7 @@
             </div>
         </section>
     </div>
-    
+
     <!-- Bitcoin Data Labs Footer -->
     <div id="footer"></div>
 
@@ -120,8 +127,9 @@
             });
         });
     </script>
-    
+
     <!-- Homepage functionality -->
     <script type="module" src="scripts/homepage.js"></script>
 </body>
+
 </html>

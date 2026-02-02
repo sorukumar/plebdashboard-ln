@@ -239,6 +239,9 @@ class ChannelsTableManager {
                         <option value="100" ${this.pageSize === 100 ? 'selected' : ''}>100 per page</option>
                     </select>
                 </div>
+                <div class="table-info">
+                    <span id="channelsCount">${this.filteredData.length}</span> channels
+                </div>
             </div>
         `;
 
@@ -319,7 +322,7 @@ class ChannelsTableManager {
                     </td>
                     <td class="capacity-cell">${this.formatCapacity(channel.capacity)} sats</td>
                     <td class="birth-tx-cell">
-                        ${channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" class="alias-link">${channel.birth_tx || 'N/A'}</a>` : channel.birth_tx || 'N/A'}
+                        ${channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${channel.birth_tx || 'N/A'}</a>` : channel.birth_tx || 'N/A'}
                     </td>
                     <td class="fees-cell">${this.formatPolicyCompact(myPolicy)}</td>
                     <td class="fees-cell">${this.formatPolicyCompact(peerPolicy)}</td>

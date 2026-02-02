@@ -17,10 +17,22 @@
     --error-color: #dc3545;
     --success-color: #28a745;
     --bitcoin-orange: #f7931a;
-    
+
     /* Container widths */
     --container-width: 90%;
     --max-content-width: 1200px;
+
+    /* Semantic Header Overrides */
+    /* Header background inherits brand-standard gradient from BDL */
+    --bdl-subnav-bg: var(--bg-primary);
+    /* Sub-nav matches page background */
+    --bdl-nav-active-bg: var(--primary);
+    --bdl-nav-active-text: #FFFFFF;
+}
+
+/* Cleaner App Logo (No underlines) */
+#header .app-name {
+    text-decoration: none !important;
 }
 
 body {
@@ -49,22 +61,46 @@ body {
     pointer-events: auto;
 }
 
-button, .btn, .tab-btn, .pagination-btn, .view-btn, .filter-preset, .reset-btn, 
-.copy-btn, .search-button, .toggle-filters, .sortable, th.sortable, 
-.node-card:hover, .suggestion-item, .page-number {
+button,
+.btn,
+.tab-btn,
+.pagination-btn,
+.view-btn,
+.filter-preset,
+.reset-btn,
+.copy-btn,
+.search-button,
+.toggle-filters,
+.sortable,
+th.sortable,
+.node-card:hover,
+.suggestion-item,
+.page-number {
     user-select: none;
 }
 
-a, a *, .info-item a, .info-value a, [href] {
+a,
+a *,
+.info-item a,
+.info-value a,
+[href] {
     pointer-events: auto !important;
     user-select: text !important;
     cursor: pointer;
 }
 
-.info-grid, .info-item, .info-value, .info-label, 
-.overview-section, .node-pubkey, .pubkey-display,
-.channels-table td, .channels-table th,
-p, span, div:not(.btn):not(.button):not([role="button"]) {
+.info-grid,
+.info-item,
+.info-value,
+.info-label,
+.overview-section,
+.node-pubkey,
+.pubkey-display,
+.channels-table td,
+.channels-table th,
+p,
+span,
+div:not(.btn):not(.button):not([role="button"]) {
     user-select: text !important;
     pointer-events: auto !important;
 }
@@ -116,8 +152,13 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
 }
 
 @keyframes hero-bg-float {
-    0% { transform: translateX(-50%) scale(1) translateY(0); }
-    100% { transform: translateX(-50%) scale(1.08) translateY(30px); }
+    0% {
+        transform: translateX(-50%) scale(1) translateY(0);
+    }
+
+    100% {
+        transform: translateX(-50%) scale(1.08) translateY(30px);
+    }
 }
 
 .hero-search-section h1 {
@@ -380,7 +421,7 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 18px;
-    box-shadow: 0 2px 12px rgba(42,51,66,0.06);
+    box-shadow: 0 2px 12px rgba(42, 51, 66, 0.06);
     padding: 1.7rem 1.5rem 1.3rem 1.5rem;
     text-decoration: none;
     color: var(--text-primary);
@@ -489,7 +530,8 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
     min-width: 0;
 }
 
-.feature-link:hover, .feature-link:focus {
+.feature-link:hover,
+.feature-link:focus {
     background: var(--bg-secondary);
     box-shadow: 0 2px 12px rgba(232, 145, 107, 0.07);
     color: var(--primary);
@@ -563,9 +605,11 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
         gap: 1.2rem;
         max-width: 98vw;
     }
+
     .feature-title {
         font-size: 1rem;
     }
+
     .feature-desc {
         font-size: 0.93rem;
     }
@@ -575,35 +619,44 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
     .hero-search-section {
         padding: 2.2rem 0 1.5rem 0;
     }
+
     .hero-search-section h1 {
         font-size: 2rem;
     }
+
     .hero-search-section::before {
         width: 400px;
         height: 250px;
         top: -60px;
     }
+
     .search-description {
         font-size: 1rem;
         margin-bottom: 2rem;
     }
+
     .search-input-container {
         max-width: 100%;
         padding: 0.15rem 0.2rem;
     }
-    .search-input-hero, .search-button {
+
+    .search-input-hero,
+    .search-button {
         font-size: 1rem;
         padding: 0.7rem 0.9rem;
     }
+
     .search-suggestions {
         right: 0;
         left: 0;
         margin: 0 1rem;
     }
+
     .search-error-toast {
         margin: 0 1rem;
         max-width: calc(100% - 2rem);
     }
+
     .featured-nodes-grid {
         grid-template-columns: 1fr;
         gap: 1rem;
@@ -617,14 +670,17 @@ p, span, div:not(.btn):not(.button):not([role="button"]) {
         gap: 0.7rem;
         margin-top: 1.2rem;
     }
+
     .feature-link {
         padding: 0.7rem 0.5rem;
         border-radius: 12px;
         justify-content: flex-start;
     }
+
     .feature-title {
         font-size: 1rem;
     }
+
     .feature-desc {
         font-size: 0.9rem;
     }

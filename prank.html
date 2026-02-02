@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PRank – Plebdashboard</title>
-    
+
     <!-- Bitcoin Data Labs styles -->
     <link rel="stylesheet" href="https://sorukumar.github.io/Bitcoin-Data-Labs/styles/styles.css">
     <!-- Font Awesome for icons -->
@@ -13,12 +14,13 @@
     <link rel="stylesheet" href="styles/main.css">
     <link rel="stylesheet" href="styles/node-rank.css">
     <link rel="stylesheet" href="styles/components.css">
-    
+
 </head>
-<body>
+
+<body class="has-fixed-header">
     <!-- Bitcoin Data Labs Header -->
     <div id="header"></div>
-    
+
     <div class="main-content">
         <!-- Compact Page Header -->
         <div class="page-header-compact">
@@ -27,31 +29,18 @@
                     <h1>PRank</h1>
                     <p>Comprehensive Lightning Network node rankings by Pleb Rank score</p>
                 </div>
-                <div class="page-nav-compact">
-                    <a href="node-explorer.html" class="nav-link-compact" title="Node Explorer">
-                        <i class="fas fa-compass"></i>
-                        <span>Nodes</span>
-                    </a>
-                    <a href="channel-explorer.html" class="nav-link-compact" title="Channel Explorer">
-                        <i class="fas fa-link"></i>
-                        <span>Channels</span>
-                    </a>
-                    <a href="node-comparison.html" class="nav-link-compact" title="Node Comparison">
-                        <i class="fas fa-balance-scale"></i>
-                        <span>Comparison</span>
-                    </a>
-                </div>
             </div>
         </div>
-        
+
         <!-- Table Controls (moved closer to reduce space) -->
         <div class="table-controls">
             <div class="search-container">
-                <input type="text" id="searchInput" placeholder="Search by node alias or pubkey..." class="search-input">
+                <input type="text" id="searchInput" placeholder="Search by node alias or pubkey..."
+                    class="search-input">
                 <i class="fas fa-search search-icon"></i>
             </div>
         </div>
-        
+
         <div class="table-container">
             <div id="loading" class="loading">
                 <i class="fas fa-spinner fa-spin"></i>
@@ -62,7 +51,7 @@
                 <tbody id="tableBody"></tbody>
             </table>
         </div>
-        
+
         <div class="pagination-container">
             <div class="pagination-info">
                 <span id="paginationInfo">Loading...</span>
@@ -78,10 +67,10 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Bitcoin Data Labs Footer -->
     <div id="footer"></div>
-    
+
     <!-- Bitcoin Data Labs App Components -->
     <script src="https://sorukumar.github.io/Bitcoin-Data-Labs/components/app-components.js"></script>
     <!-- Hyparquet library -->
@@ -94,9 +83,16 @@
             BitcoinLabsAppComponents.init({
                 isApp: true,
                 appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/"
+                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/",
+                navLinks: [
+                    { name: 'Node Rankings', url: 'prank.html' },
+                    { name: 'Node Explorer', url: 'node-explorer.html' },
+                    { name: 'Channel Explorer', url: 'channel-explorer.html' },
+                    { name: 'Comparison', url: 'node-comparison.html' }
+                ]
             });
         });
     </script>
 </body>
+
 </html>

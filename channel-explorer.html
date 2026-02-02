@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plebdashboard – Channel Explorer</title>
-    
+
     <!-- Bitcoin Data Labs styles -->
     <link rel="stylesheet" href="https://sorukumar.github.io/Bitcoin-Data-Labs/styles/styles.css">
     <!-- Font Awesome for icons -->
@@ -15,10 +16,11 @@
     <link rel="stylesheet" href="styles/node-explorer.css">
     <link rel="stylesheet" href="styles/node-rank.css">
 </head>
-<body>
+
+<body class="has-fixed-header">
     <!-- Bitcoin Data Labs Header -->
     <div id="header"></div>
-    
+
     <div class="main-content">
         <div class="explorer-container">
             <!-- Compact Page Header -->
@@ -28,20 +30,6 @@
                         <h1>Channel Explorer</h1>
                         <p>Search, filter, and compare Lightning Network channels</p>
                     </div>
-                    <div class="page-nav-compact">
-                        <a href="prank.html" class="nav-link-compact" title="Node Rankings">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>Rankings</span>
-                        </a>
-                        <a href="node-explorer.html" class="nav-link-compact" title="Node Explorer">
-                            <i class="fas fa-compass"></i>
-                            <span>Nodes</span>
-                        </a>
-                        <a href="node-comparison.html" class="nav-link-compact" title="Node Comparison">
-                            <i class="fas fa-balance-scale"></i>
-                            <span>Comparison</span>
-                        </a>
-                    </div>
                 </div>
             </div>
 
@@ -50,16 +38,18 @@
                 <div class="controls-row-unified">
                     <!-- Node Search Boxes with Bidirectional Logic -->
                     <div class="search-container">
-                        <input type="text" id="node1SearchInput" placeholder="Node 1: Search by alias or pubkey..." class="search-input">
+                        <input type="text" id="node1SearchInput" placeholder="Node 1: Search by alias or pubkey..."
+                            class="search-input">
                         <i class="fas fa-search search-icon"></i>
                     </div>
-                    
+
                     <div class="search-divider">
                         <i class="fas fa-arrows-alt-h" title="Channels connect two nodes"></i>
                     </div>
-                    
+
                     <div class="search-container">
-                        <input type="text" id="node2SearchInput" placeholder="Node 2: Search by alias or pubkey..." class="search-input">
+                        <input type="text" id="node2SearchInput" placeholder="Node 2: Search by alias or pubkey..."
+                            class="search-input">
                         <i class="fas fa-search search-icon"></i>
                     </div>
 
@@ -68,11 +58,12 @@
                         <i class="fas fa-undo"></i>
                     </button>
                 </div>
-                
+
                 <!-- Search Hint -->
                 <div class="search-hint">
                     <i class="fas fa-info-circle"></i>
-                    <span>Fill one box to see all channels for that node, or both boxes to find channels between two nodes</span>
+                    <span>Fill one box to see all channels for that node, or both boxes to find channels between two
+                        nodes</span>
                 </div>
 
                 <!-- Filter Statistics -->
@@ -118,7 +109,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Bitcoin Data Labs Footer -->
     <div id="footer"></div>
 
@@ -129,12 +120,19 @@
             BitcoinLabsAppComponents.init({
                 isApp: true,
                 appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/"
+                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/",
+                navLinks: [
+                    { name: 'Node Rankings', url: 'prank.html' },
+                    { name: 'Node Explorer', url: 'node-explorer.html' },
+                    { name: 'Channel Explorer', url: 'channel-explorer.html' },
+                    { name: 'Comparison', url: 'node-comparison.html' }
+                ]
             });
         });
     </script>
-    
+
     <!-- Channel Explorer functionality -->
     <script type="module" src="scripts/channel-explorer.js"></script>
 </body>
+
 </html>

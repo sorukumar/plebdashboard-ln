@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plebdashboard – Node Profile</title>
-    
+
     <!-- Bitcoin Data Labs styles -->
     <link rel="stylesheet" href="https://sorukumar.github.io/Bitcoin-Data-Labs/styles/styles.css">
     <!-- Font Awesome for icons -->
@@ -15,10 +16,11 @@
     <link rel="stylesheet" href="styles/node-rank.css">
     <link rel="stylesheet" href="styles/components.css">
 </head>
-<body>
+
+<body class="has-fixed-header">
     <!-- Bitcoin Data Labs Header -->
     <div id="header"></div>
-    
+
     <div class="main-content">
         <!-- Loading state -->
         <div id="loading" class="loading-container">
@@ -63,7 +65,8 @@
                             </button>
                             <div class="copy-tooltip" id="copyTooltip">
                                 <button id="copyPubkeyAction" class="copy-tooltip-item">Copy pubkey</button>
-                                <button id="copyConnectAddressAction" class="copy-tooltip-item">Copy connect address</button>
+                                <button id="copyConnectAddressAction" class="copy-tooltip-item">Copy connect
+                                    address</button>
                                 <div class="copy-tooltip-hint">pubkey@host:port for adding as peer</div>
                             </div>
                         </div>
@@ -71,22 +74,6 @@
                     <div class="node-type-badge" id="nodeTypeBadge">
                         <i class="fas fa-server"></i>
                         <span id="nodeType">Loading...</span>
-                    </div>
-                </div>
-                <div class="profile-actions">
-                    <div class="nav-btn-group">
-                        <a href="prank.html" class="nav-btn">
-                            <i class="fas fa-chart-line"></i>
-                            Rankings
-                        </a>
-                        <a href="node-explorer.html" class="nav-btn">
-                            <i class="fas fa-compass"></i>
-                            Node Explorer
-                        </a>
-                        <a href="node-comparison.html" class="nav-btn">
-                            <i class="fas fa-balance-scale"></i>
-                            Comparison
-                        </a>
                     </div>
                 </div>
             </div>
@@ -265,7 +252,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Bitcoin Data Labs Footer -->
     <div id="footer"></div>
 
@@ -276,12 +263,19 @@
             BitcoinLabsAppComponents.init({
                 isApp: true,
                 appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/"
+                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/",
+                navLinks: [
+                    { name: 'Node Rankings', url: 'prank.html' },
+                    { name: 'Node Explorer', url: 'node-explorer.html' },
+                    { name: 'Channel Explorer', url: 'channel-explorer.html' },
+                    { name: 'Comparison', url: 'node-comparison.html' }
+                ]
             });
         });
     </script>
-    
+
     <!-- Profile functionality -->
     <script type="module" src="scripts/profile.js"></script>
 </body>
+
 </html>

@@ -1,10 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Plebdashboard – Node Explorer</title>
-    
+
     <!-- Bitcoin Data Labs styles -->
     <link rel="stylesheet" href="https://sorukumar.github.io/Bitcoin-Data-Labs/styles/styles.css">
     <!-- Font Awesome for icons -->
@@ -14,10 +15,11 @@
     <link rel="stylesheet" href="styles/components.css">
     <link rel="stylesheet" href="styles/node-explorer.css">
 </head>
-<body>
+
+<body class="has-fixed-header">
     <!-- Bitcoin Data Labs Header -->
     <div id="header"></div>
-    
+
     <div class="main-content">
         <div class="explorer-container">
             <!-- Compact Page Header -->
@@ -27,20 +29,6 @@
                         <h1>Node Explorer</h1>
                         <p>Explore and discover Lightning Network nodes with advanced filtering</p>
                     </div>
-                    <div class="page-nav-compact">
-                        <a href="prank.html" class="nav-link-compact" title="Node Rankings">
-                            <i class="fas fa-chart-bar"></i>
-                            <span>Rankings</span>
-                        </a>
-                        <a href="channel-explorer.html" class="nav-link-compact" title="Channel Explorer">
-                            <i class="fas fa-link"></i>
-                            <span>Channels</span>
-                        </a>
-                        <a href="node-comparison.html" class="nav-link-compact" title="Node Comparison">
-                            <i class="fas fa-balance-scale"></i>
-                            <span>Comparison</span>
-                        </a>
-                    </div>
                 </div>
             </div>
 
@@ -49,7 +37,8 @@
                 <div class="controls-row-unified">
                     <!-- Search -->
                     <div class="search-container">
-                        <input type="text" id="nodeExplorerSearchInput" placeholder="Search by node alias or pubkey..." class="search-input">
+                        <input type="text" id="nodeExplorerSearchInput" placeholder="Search by node alias or pubkey..."
+                            class="search-input">
                         <i class="fas fa-search search-icon"></i>
                     </div>
 
@@ -111,20 +100,22 @@
                 <div class="advanced-filters-section">
                     <div class="section-header" onclick="this.parentElement.classList.toggle('expanded')">
                         <h3>
-                            <i class="fas fa-sliders-h"></i> 
+                            <i class="fas fa-sliders-h"></i>
                             Advanced Range Filters
-                            <span class="filter-count-badge" id="activeFilterCount" style="display: none;">0 active</span>
+                            <span class="filter-count-badge" id="activeFilterCount" style="display: none;">0
+                                active</span>
                         </h3>
                         <button class="toggle-filters">
                             <i class="fas fa-chevron-down"></i>
                         </button>
                     </div>
-                    
+
                     <div class="filters-grid">
                         <!-- Finding Routing Nodes -->
                         <div class="filter-category">
                             <h4><i class="fas fa-route"></i> Finding Routing Nodes</h4>
-                            <p class="category-description">Network topology metrics for identifying well-positioned routing nodes</p>
+                            <p class="category-description">Network topology metrics for identifying well-positioned
+                                routing nodes</p>
                             <div class="range-filter">
                                 <label>Pleb Rank</label>
                                 <div class="range-inputs">
@@ -132,32 +123,39 @@
                                     <span class="range-separator">to</span>
                                     <input type="number" id="pleb_rank_max" placeholder="Max rank" min="1">
                                 </div>
-                                <div class="filter-helper">Composite score: routing quality + capacity + connectivity</div>
+                                <div class="filter-helper">Composite score: routing quality + capacity + connectivity
+                                </div>
                             </div>
                             <div class="range-filter">
                                 <label>Betweenness Centrality Rank</label>
                                 <div class="range-inputs">
-                                    <input type="number" id="betweenness_centrality_rank_min" placeholder="Min rank" min="1">
+                                    <input type="number" id="betweenness_centrality_rank_min" placeholder="Min rank"
+                                        min="1">
                                     <span class="range-separator">to</span>
-                                    <input type="number" id="betweenness_centrality_rank_max" placeholder="Max rank" min="1">
+                                    <input type="number" id="betweenness_centrality_rank_max" placeholder="Max rank"
+                                        min="1">
                                 </div>
                                 <div class="filter-helper">How often node appears on shortest payment paths</div>
                             </div>
                             <div class="range-filter">
                                 <label>Eigenvector Centrality Rank</label>
                                 <div class="range-inputs">
-                                    <input type="number" id="eigenvector_centrality_rank_min" placeholder="Min rank" min="1">
+                                    <input type="number" id="eigenvector_centrality_rank_min" placeholder="Min rank"
+                                        min="1">
                                     <span class="range-separator">to</span>
-                                    <input type="number" id="eigenvector_centrality_rank_max" placeholder="Max rank" min="1">
+                                    <input type="number" id="eigenvector_centrality_rank_max" placeholder="Max rank"
+                                        min="1">
                                 </div>
                                 <div class="filter-helper">Well-connected to other important nodes</div>
                             </div>
                             <div class="range-filter">
                                 <label>Weighted Degree Rank</label>
                                 <div class="range-inputs">
-                                    <input type="number" id="capacity_weighted_degree_rank_min" placeholder="Min rank" min="1">
+                                    <input type="number" id="capacity_weighted_degree_rank_min" placeholder="Min rank"
+                                        min="1">
                                     <span class="range-separator">to</span>
-                                    <input type="number" id="capacity_weighted_degree_rank_max" placeholder="Max rank" min="1">
+                                    <input type="number" id="capacity_weighted_degree_rank_max" placeholder="Max rank"
+                                        min="1">
                                 </div>
                                 <div class="filter-helper">Capacity-weighted connection quality</div>
                             </div>
@@ -246,7 +244,7 @@
             </div>
         </div>
     </div>
-    
+
     <!-- Bitcoin Data Labs Footer -->
     <div id="footer"></div>
 
@@ -257,12 +255,19 @@
             BitcoinLabsAppComponents.init({
                 isApp: true,
                 appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/"
+                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/",
+                navLinks: [
+                    { name: 'Node Rankings', url: 'prank.html' },
+                    { name: 'Node Explorer', url: 'node-explorer.html' },
+                    { name: 'Channel Explorer', url: 'channel-explorer.html' },
+                    { name: 'Comparison', url: 'node-comparison.html' }
+                ]
             });
         });
     </script>
-    
+
     <!-- Node Explorer functionality -->
     <script type="module" src="scripts/node-explorer.js"></script>
 </body>
+
 </html>
