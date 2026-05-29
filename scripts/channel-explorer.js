@@ -264,21 +264,31 @@ class ChannelExplorerManager {
     filterData() {
         const node1SearchInput = document.getElementById('node1SearchInput');
         const node2SearchInput = document.getElementById('node2SearchInput');
-        const node1SearchTerm = node1SearchInput ? node1SearchInput.value.toLowerCase() : '';
-        const node2SearchTerm = node2SearchInput ? node2SearchInput.value.toLowerCase() : '';
+        const node1SearchTerm = node1SearchInput ? node1SearchInput.value.trim().toLowerCase() : '';
+        const node2SearchTerm = node2SearchInput ? node2SearchInput.value.trim().toLowerCase() : '';
 
         let filtered = this.allChannels;
-        if (node1SearchTerm) {
-            filtered = filtered.filter(channel =>
-                (channel.alias_1 || '').toLowerCase().includes(node1SearchTerm) ||
-                (channel.node1_pub || '').toLowerCase().includes(node1SearchTerm)
-            );
-        }
-        if (node2SearchTerm) {
-            filtered = filtered.filter(channel =>
-                (channel.alias_2 || '').toLowerCase().includes(node2SearchTerm) ||
-                (channel.node2_pub || '').toLowerCase().includes(node2SearchTerm)
-            );
+
+        if (node1SearchTerm || node2SearchTerm) {
+            filtered = filtered.filter(channel => {
+                const node1MatchTerm1 = node1SearchTerm ? ((channel.alias_1 || '').toLowerCase().includes(node1SearchTerm) || (channel.node1_pub || '').toLowerCase().includes(node1SearchTerm)) : false;
+                const node2MatchTerm1 = node1SearchTerm ? ((channel.alias_2 || '').toLowerCase().includes(node1SearchTerm) || (channel.node2_pub || '').toLowerCase().includes(node1SearchTerm)) : false;
+                
+                const node1MatchTerm2 = node2SearchTerm ? ((channel.alias_1 || '').toLowerCase().includes(node2SearchTerm) || (channel.node1_pub || '').toLowerCase().includes(node2SearchTerm)) : false;
+                const node2MatchTerm2 = node2SearchTerm ? ((channel.alias_2 || '').toLowerCase().includes(node2SearchTerm) || (channel.node2_pub || '').toLowerCase().includes(node2SearchTerm)) : false;
+
+                if (node1SearchTerm && node2SearchTerm) {
+                    // Both terms present: (N1 matches T1 AND N2 matches T2) OR (N1 matches T2 AND N2 matches T1)
+                    return (node1MatchTerm1 && node2MatchTerm2) || (node1MatchTerm2 && node2MatchTerm1);
+                } else if (node1SearchTerm) {
+                    // Only term 1 present
+                    return node1MatchTerm1 || node2MatchTerm1;
+                } else if (node2SearchTerm) {
+                    // Only term 2 present
+                    return node1MatchTerm2 || node2MatchTerm2;
+                }
+                return true;
+            });
         }
         this.filteredChannels = filtered;
 

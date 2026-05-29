@@ -621,3 +621,61 @@
     border-bottom-color: var(--primary);
     transform: translateX(2px);
 }
+
+/* Expandable Rows */
+.peer-group-row {
+    cursor: pointer;
+    transition: background-color 0.2s ease;
+}
+
+.peer-group-row:hover {
+    background-color: var(--bg-secondary);
+}
+
+.peer-group-row .expand-icon {
+    transition: transform 0.3s ease;
+    display: inline-block;
+    margin-right: 0.5rem;
+    color: var(--text-secondary);
+}
+
+.peer-group-row.expanded .expand-icon {
+    transform: rotate(90deg);
+}
+
+.channel-details-row {
+    background-color: var(--bg-secondary);
+}
+
+.channel-details-row td {
+    padding: 0 !important; /* Remove default padding for seamless nested table */
+}
+
+.nested-table-container {
+    padding: 1rem 2rem;
+    background-color: var(--surface);
+    border-bottom: 1px solid var(--border);
+}
+
+.nested-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+}
+
+.nested-table th,
+.nested-table td {
+    padding: 0.75rem 1rem;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+}
+
+.nested-table th {
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: var(--bg-primary);
+}
+
+.nested-table tr:last-child td {
+    border-bottom: none;
+}

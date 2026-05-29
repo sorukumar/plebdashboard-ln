@@ -4,6 +4,7 @@ class ChannelsTableManager {
     constructor() {
         this.tableContainer = null;
         this.channelsData = [];
+        this.peerGroupsData = [];
         this.filteredData = [];
         this.paginatedData = [];
         this.sortColumn = null;
@@ -12,6 +13,7 @@ class ChannelsTableManager {
         this.currentPage = 1;
         this.pageSize = 50;
         this.totalPages = 1;
+        this.eventListenersSetup = false;
     }
 
     async fetchParquet(url) {
@@ -44,13 +46,11 @@ class ChannelsTableManager {
                             
                             // Map the parquet data to objects
                             const columns = this.getChannelColumns();
-                            console.log('ChannelsTableManager: Expected columns:', columns);
                             
                             const allChannels = result.map(row => {
                                 const obj = {};
                                 columns.forEach((col, i) => {
                                     let val = row[i];
-                                    // Trim pubkeys and aliases to handle whitespace in data
                                     if (col.includes('pub') || col.includes('alias')) {
                                         val = val ? String(val).trim() : '';
                                     }
@@ -59,15 +59,10 @@ class ChannelsTableManager {
                                 return obj;
                             });
                             
-                            console.log('ChannelsTableManager: All channels mapped:', allChannels.length);
-                            console.log('ChannelsTableManager: Sample channel:', allChannels[0]);
-                            
                             // Filter channels for this node
                             this.channelsData = allChannels.filter(
                                 ch => ch.node1_pub === nodePubKey || ch.node2_pub === nodePubKey
                             );
-                            
-                            console.log('ChannelsTableManager: Filtered channels for node:', this.channelsData.length);
                             
                             if (this.channelsData.length === 0) {
                                 console.warn('ChannelsTableManager: No channels found for node:', nodePubKey);
@@ -76,10 +71,33 @@ class ChannelsTableManager {
                                 return;
                             }
                             
-                            this.filteredData = [...this.channelsData];
-                            console.log('ChannelsTableManager: About to render table...');
+                            // Group channels by peer
+                            const peerGroups = {};
+                            this.channelsData.forEach(channel => {
+                                const isNode1 = channel.node1_pub === nodePubKey;
+                                const peerPubkey = isNode1 ? channel.node2_pub : channel.node1_pub;
+                                const pPub = peerPubkey ? String(peerPubkey).trim() : '';
+                                const alias1 = channel.alias_1 ? String(channel.alias_1).trim() : '';
+                                const alias2 = channel.alias_2 ? String(channel.alias_2).trim() : '';
+                                const peerAlias = isNode1 ? alias2 : alias1;
+                                
+                                if (!peerGroups[pPub]) {
+                                    peerGroups[pPub] = {
+                                        peerPubkey: pPub,
+                                        peerAlias: peerAlias || (pPub ? pPub.substring(0, 8) + '...' : '-'),
+                                        channels: [],
+                                        totalCapacity: 0,
+                                        channelCount: 0
+                                    };
+                                }
+                                peerGroups[pPub].channels.push(channel);
+                                peerGroups[pPub].totalCapacity += Number(channel.capacity) || 0;
+                                peerGroups[pPub].channelCount += 1;
+                            });
+                            this.peerGroupsData = Object.values(peerGroups);
+
+                            this.filteredData = [...this.peerGroupsData];
                             this.renderTable(nodePubKey);
-                            console.log('ChannelsTableManager: Table rendered successfully');
                             resolve();
                         } catch (error) {
                             console.error('ChannelsTableManager: Error processing data:', error);
@@ -109,20 +127,9 @@ class ChannelsTableManager {
 
     parsePolicy(policyStr) {
         if (!policyStr || policyStr === 'null' || policyStr === null) {
-            return {
-                disabled: true,
-                fee_base_msat: 0,
-                fee_rate_milli_msat: 0,
-                inbound_fee_base_msat: 0,
-                inbound_fee_rate_milli_msat: 0,
-                min_htlc: 0,
-                max_htlc_msat: 0,
-                time_lock_delta: 0
-            };
+            return { disabled: true, fee_base_msat: 0, fee_rate_milli_msat: 0, inbound_fee_base_msat: 0, inbound_fee_rate_milli_msat: 0, min_htlc: 0, max_htlc_msat: 0, time_lock_delta: 0 };
         }
-        
         try {
-            // Handle both string and object cases
             const policy = typeof policyStr === 'string' ? JSON.parse(policyStr) : policyStr;
             return {
                 disabled: policy.disabled || false,
@@ -135,27 +142,30 @@ class ChannelsTableManager {
                 time_lock_delta: Number(policy.time_lock_delta) || 0
             };
         } catch (e) {
-            console.warn('Error parsing policy:', e, policyStr);
-            return {
-                disabled: true,
-                fee_base_msat: 0,
-                fee_rate_milli_msat: 0,
-                inbound_fee_base_msat: 0,
-                inbound_fee_rate_milli_msat: 0,
-                min_htlc: 0,
-                max_htlc_msat: 0,
-                time_lock_delta: 0
-            };
+            return { disabled: true, fee_base_msat: 0, fee_rate_milli_msat: 0, inbound_fee_base_msat: 0, inbound_fee_rate_milli_msat: 0, min_htlc: 0, max_htlc_msat: 0, time_lock_delta: 0 };
         }
     }
 
-    formatCapacity(capacity) {
-        if (!capacity) return 'N/A';
-        const num = Number(capacity);
-        if (num >= 1_000_000_000) return `${(num / 1_000_000_000).toFixed(1)}B`;
-        if (num >= 1_000_000) return `${(num / 1_000_000).toFixed(0)}M`;
-        if (num >= 1_000) return `${(num / 1_000).toFixed(0)}K`;
-        return num.toLocaleString();
+    formatCapacity(value) {
+        if (value === null || value === undefined) return '-';
+        const capacity = Number(value);
+        if (Number.isNaN(capacity)) return '-';
+
+        if (capacity < 1_000_000) {
+            // < 1M sats -> k sats
+            return `${(capacity / 1_000).toLocaleString(undefined, { maximumFractionDigits: 0 })}k sats`;
+        } else if (capacity < 100_000_000) {
+            // < 100M sats -> m sats
+            return `${(capacity / 1_000_000).toLocaleString(undefined, { maximumFractionDigits: 0 })}m sats`;
+        } else {
+            // >= 100M sats -> bitcoin
+            const btc = capacity / 100_000_000;
+            if (btc >= 10) {
+                return `${btc.toLocaleString(undefined, { maximumFractionDigits: 0 })} bitcoin`;
+            } else {
+                return `${btc.toLocaleString(undefined, { maximumFractionDigits: 1 })} bitcoin`;
+            }
+        }
     }
 
     formatMsat(msat) {
@@ -175,57 +185,25 @@ class ChannelsTableManager {
         if (policy.disabled) {
             return '<span class="disabled-text">Channel Disabled</span>';
         }
-        
         return `
             <div class="fee-breakdown">
-                <div class="fee-row">
-                    <span class="fee-label">Base:</span>
-                    <span class="fee-value">${this.formatMsat(policy.fee_base_msat)} msat</span>
-                </div>
-                <div class="fee-row">
-                    <span class="fee-label">Rate:</span>
-                    <span class="fee-value">${this.formatPPM(policy.fee_rate_milli_msat)} ppm</span>
-                </div>
-                <div class="fee-row">
-                    <span class="fee-label">Inbound Base:</span>
-                    <span class="fee-value">${this.formatMsat(policy.inbound_fee_base_msat)} msat</span>
-                </div>
-                <div class="fee-row">
-                    <span class="fee-label">Inbound Rate:</span>
-                    <span class="fee-value">${this.formatPPM(policy.inbound_fee_rate_milli_msat)} ppm</span>
-                </div>
-                <div class="fee-row">
-                    <span class="fee-label">Min HTLC:</span>
-                    <span class="fee-value">${this.formatMsat(policy.min_htlc)} msat</span>
-                </div>
-                <div class="fee-row">
-                    <span class="fee-label">Max HTLC:</span>
-                    <span class="fee-value">${this.formatMsat(policy.max_htlc_msat)} msat</span>
-                </div>
-                <div class="fee-row">
-                    <span class="fee-label">Timelock Δ:</span>
-                    <span class="fee-value">${policy.time_lock_delta || 0}</span>
-                </div>
+                <div class="fee-row"><span class="fee-label">Base:</span><span class="fee-value">${this.formatMsat(policy.fee_base_msat)} msat</span></div>
+                <div class="fee-row"><span class="fee-label">Rate:</span><span class="fee-value">${this.formatPPM(policy.fee_rate_milli_msat)} ppm</span></div>
+                <div class="fee-row"><span class="fee-label">Inbound Base:</span><span class="fee-value">${this.formatMsat(policy.inbound_fee_base_msat)} msat</span></div>
+                <div class="fee-row"><span class="fee-label">Inbound Rate:</span><span class="fee-value">${this.formatPPM(policy.inbound_fee_rate_milli_msat)} ppm</span></div>
+                <div class="fee-row"><span class="fee-label">Min HTLC:</span><span class="fee-value">${this.formatMsat(policy.min_htlc)} msat</span></div>
+                <div class="fee-row"><span class="fee-label">Max HTLC:</span><span class="fee-value">${this.formatMsat(policy.max_htlc_msat)} msat</span></div>
+                <div class="fee-row"><span class="fee-label">Timelock Δ:</span><span class="fee-value">${policy.time_lock_delta || 0}</span></div>
             </div>
         `;
     }
 
     renderTable(nodePubKey) {
-        console.log('ChannelsTableManager: renderTable called with node:', nodePubKey);
-        console.log('ChannelsTableManager: Filtered data length:', this.filteredData.length);
-        
         const container = document.getElementById('channelsTableContainer');
-        if (!container) {
-            console.error('ChannelsTableManager: channelsTableContainer element not found in DOM');
-            return;
-        }
+        if (!container) return;
 
-        // Calculate pagination
         this.updatePagination();
 
-        console.log('ChannelsTableManager: Container found, rendering table...');
-
-        // Create table controls HTML
         const controlsHTML = `
             <div class="table-controls">
                 <div class="search-container">
@@ -240,21 +218,18 @@ class ChannelsTableManager {
                     </select>
                 </div>
                 <div class="table-info">
-                    <span id="channelsCount">${this.filteredData.length}</span> channels
+                    <span id="channelsCount">${this.filteredData.length}</span> peers
                 </div>
             </div>
         `;
 
-        // Create table wrapper
         const tableWrapper = document.createElement('div');
         tableWrapper.className = 'table-wrapper';
 
-        // Create table element
         const table = document.createElement('table');
         table.className = 'data-table';
         table.id = 'channelsTable';
 
-        // Create thead with innerHTML for simplicity
         const thead = document.createElement('thead');
         thead.innerHTML = `
             <tr>
@@ -268,12 +243,10 @@ class ChannelsTableManager {
         `;
         table.appendChild(thead);
 
-        // Attach sorting event listeners to sortable headers
         thead.querySelectorAll('th.sortable').forEach(th => {
             th.addEventListener('click', () => this.sortData(th.dataset.sort));
         });
 
-        // Create tbody
         const tbody = document.createElement('tbody');
         tbody.id = 'channelsTableBody';
         tbody.innerHTML = this.generateTableRows(nodePubKey);
@@ -281,65 +254,128 @@ class ChannelsTableManager {
 
         tableWrapper.appendChild(table);
 
-        // Set container content
         container.innerHTML = controlsHTML;
         container.appendChild(tableWrapper);
         container.insertAdjacentHTML('beforeend', this.generatePaginationControls());
 
-        console.log('ChannelsTableManager: Table created with event listeners attached...');
         this.setupEventListeners();
-        console.log('ChannelsTableManager: Table rendering complete');
     }
 
     generateTableRows(nodePubKey) {
-        return this.paginatedData.map(channel => {
-            const isNode1 = channel.node1_pub === nodePubKey;
+        return this.paginatedData.map((group, index) => {
+            const peerPubkey = group.peerPubkey;
+            const peerAlias = group.peerAlias;
             
-            // Add null checks and ensure we have string values
-            const node1Pub = channel.node1_pub ? String(channel.node1_pub).trim() : '';
-            const node2Pub = channel.node2_pub ? String(channel.node2_pub).trim() : '';
-            const alias1 = channel.alias_1 ? String(channel.alias_1).trim() : '';
-            const alias2 = channel.alias_2 ? String(channel.alias_2).trim() : '';
-            
-            const peerAlias = isNode1 
-                ? (alias2 || (node2Pub ? node2Pub.substring(0, 8) + '...' : '-'))
-                : (alias1 || (node1Pub ? node1Pub.substring(0, 8) + '...' : '-'));
-            const peerPubkey = isNode1 ? node2Pub : node1Pub;
-            
-            const myPolicy = this.parsePolicy(isNode1 ? channel.node1_policy : channel.node2_policy);
-            const peerPolicy = this.parsePolicy(isNode1 ? channel.node2_policy : channel.node1_policy);
+            if (group.channelCount === 1) {
+                const channel = group.channels[0];
+                const isNode1 = channel.node1_pub === nodePubKey;
+                const myPolicy = this.parsePolicy(isNode1 ? channel.node1_policy : channel.node2_policy);
+                const peerPolicy = this.parsePolicy(isNode1 ? channel.node2_policy : channel.node1_policy);
 
-            // Status indicators
-            const myStatus = myPolicy.disabled ? 'Disabled' : 'Active';
-            const peerStatus = peerPolicy.disabled ? 'Disabled' : 'Active';
-            
-            return `
-                <tr data-channel-id="${channel.channel_id || 'unknown'}" class="channel-row">
+                const myStatus = myPolicy.disabled ? 'Disabled' : 'Active';
+                const peerStatus = peerPolicy.disabled ? 'Disabled' : 'Active';
+                
+                return `
+                    <tr class="channel-row">
+                        <td>
+                            <div class="peer-info-compact" style="display:inline-block; vertical-align: middle;">
+                                ${peerPubkey ? `<a href="profile.html?node=${encodeURIComponent(peerPubkey)}" class="peer-link" title="View profile">${peerAlias}</a>` : peerAlias}
+                            </div>
+                        </td>
+                        <td class="capacity-cell">${this.formatCapacity(channel.capacity)}</td>
+                        <td class="birth-tx-cell">
+                            ${channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${channel.birth_tx || 'N/A'}</a>` : channel.birth_tx || 'N/A'}
+                        </td>
+                        <td class="fees-cell">${this.formatPolicyCompact(myPolicy)}</td>
+                        <td class="fees-cell">${this.formatPolicyCompact(peerPolicy)}</td>
+                        <td class="status-cell">
+                            <div class="status-breakdown">
+                                <div class="status-row ${myPolicy.disabled ? 'disabled' : 'active'}">
+                                    <span class="status-label">Me:</span>
+                                    <span class="status-value">${myStatus}</span>
+                                </div>
+                                <div class="status-row ${peerPolicy.disabled ? 'disabled' : 'active'}">
+                                    <span class="status-label">Peer:</span>
+                                    <span class="status-value">${peerStatus}</span>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }
+
+            const masterRow = `
+                <tr class="peer-group-row" data-group-index="${index}">
                     <td>
-                        <div class="peer-info-compact">
+                        <i class="fas fa-chevron-right expand-icon"></i>
+                        <div class="peer-info-compact" style="display:inline-block; vertical-align: middle;">
                             ${peerPubkey ? `<a href="profile.html?node=${encodeURIComponent(peerPubkey)}" class="peer-link" title="View profile">${peerAlias}</a>` : peerAlias}
+                            <span class="badge" style="font-size: 0.75rem; background: var(--bg-secondary); padding: 2px 6px; border-radius: 10px; margin-left: 5px; color: var(--text-secondary);">${group.channelCount}</span>
                         </div>
                     </td>
-                    <td class="capacity-cell">${this.formatCapacity(channel.capacity)} sats</td>
-                    <td class="birth-tx-cell">
-                        ${channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${channel.birth_tx || 'N/A'}</a>` : channel.birth_tx || 'N/A'}
+                    <td class="capacity-cell">${this.formatCapacity(group.totalCapacity)}</td>
+                    <td class="birth-tx-cell" colspan="4" style="color: var(--text-secondary); font-style: italic;">
+                        Click to view ${group.channelCount} channels
                     </td>
-                    <td class="fees-cell">${this.formatPolicyCompact(myPolicy)}</td>
-                    <td class="fees-cell">${this.formatPolicyCompact(peerPolicy)}</td>
-                    <td class="status-cell">
-                        <div class="status-breakdown">
-                            <div class="status-row ${myPolicy.disabled ? 'disabled' : 'active'}">
-                                <span class="status-label">Me:</span>
-                                <span class="status-value">${myStatus}</span>
+                </tr>
+            `;
+
+            const channelsHtml = group.channels.map(channel => {
+                const isNode1 = channel.node1_pub === nodePubKey;
+                const myPolicy = this.parsePolicy(isNode1 ? channel.node1_policy : channel.node2_policy);
+                const peerPolicy = this.parsePolicy(isNode1 ? channel.node2_policy : channel.node1_policy);
+
+                const myStatus = myPolicy.disabled ? 'Disabled' : 'Active';
+                const peerStatus = peerPolicy.disabled ? 'Disabled' : 'Active';
+                
+                return `
+                    <tr>
+                        <td class="capacity-cell">${this.formatCapacity(channel.capacity)}</td>
+                        <td class="birth-tx-cell">
+                            ${channel.channel_id ? `<a href="https://mempool.space/lightning/channel/${channel.channel_id}" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: underline;">${channel.birth_tx || 'N/A'}</a>` : channel.birth_tx || 'N/A'}
+                        </td>
+                        <td class="fees-cell">${this.formatPolicyCompact(myPolicy)}</td>
+                        <td class="fees-cell">${this.formatPolicyCompact(peerPolicy)}</td>
+                        <td class="status-cell">
+                            <div class="status-breakdown">
+                                <div class="status-row ${myPolicy.disabled ? 'disabled' : 'active'}">
+                                    <span class="status-label">Me:</span>
+                                    <span class="status-value">${myStatus}</span>
+                                </div>
+                                <div class="status-row ${peerPolicy.disabled ? 'disabled' : 'active'}">
+                                    <span class="status-label">Peer:</span>
+                                    <span class="status-value">${peerStatus}</span>
+                                </div>
                             </div>
-                            <div class="status-row ${peerPolicy.disabled ? 'disabled' : 'active'}">
-                                <span class="status-label">Peer:</span>
-                                <span class="status-value">${peerStatus}</span>
-                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            const detailRow = `
+                <tr class="channel-details-row" id="group-details-${index}" style="display: none;">
+                    <td colspan="6">
+                        <div class="nested-table-container">
+                            <table class="nested-table">
+                                <thead>
+                                    <tr>
+                                        <th>Capacity</th>
+                                        <th>Birth TX</th>
+                                        <th>My Policy</th>
+                                        <th>Peer Policy</th>
+                                        <th>Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    ${channelsHtml}
+                                </tbody>
+                            </table>
                         </div>
                     </td>
                 </tr>
             `;
+
+            return masterRow + detailRow;
         }).join('');
     }
 
@@ -356,7 +392,7 @@ class ChannelsTableManager {
 
     generatePaginationControls() {
         if (this.totalPages <= 1) {
-            return '<div class="pagination-info">Showing all channels</div>';
+            return '<div class="pagination-info">Showing all peers</div>';
         }
 
         const startItem = (this.currentPage - 1) * this.pageSize + 1;
@@ -367,12 +403,10 @@ class ChannelsTableManager {
         let startPage = Math.max(1, this.currentPage - Math.floor(maxVisiblePages / 2));
         let endPage = Math.min(this.totalPages, startPage + maxVisiblePages - 1);
         
-        // Adjust start if we're near the end
         if (endPage - startPage < maxVisiblePages - 1) {
             startPage = Math.max(1, endPage - maxVisiblePages + 1);
         }
 
-        // First page and previous
         pageButtons += `
             <button class="pagination-btn" ${this.currentPage === 1 ? 'disabled' : ''} data-page="1">
                 <i class="fas fa-angle-double-left"></i>
@@ -382,7 +416,6 @@ class ChannelsTableManager {
             </button>
         `;
 
-        // Page numbers
         for (let i = startPage; i <= endPage; i++) {
             pageButtons += `
                 <button class="pagination-btn ${i === this.currentPage ? 'active' : ''}" data-page="${i}">
@@ -391,7 +424,6 @@ class ChannelsTableManager {
             `;
         }
 
-        // Next and last page
         pageButtons += `
             <button class="pagination-btn" ${this.currentPage === this.totalPages ? 'disabled' : ''} data-page="${this.currentPage + 1}">
                 <i class="fas fa-angle-right"></i>
@@ -404,7 +436,7 @@ class ChannelsTableManager {
         return `
             <div class="pagination-container">
                 <div class="pagination-info">
-                    Showing ${startItem}-${endItem} of ${this.filteredData.length} channels
+                    Showing ${startItem}-${endItem} of ${this.filteredData.length} peers
                 </div>
                 <div class="pagination-controls">
                     ${pageButtons}
@@ -414,29 +446,29 @@ class ChannelsTableManager {
     }
 
     setupEventListeners() {
-        // Search functionality
-        const searchInput = document.getElementById('channelsSearch');
-        if (searchInput) {
-            searchInput.addEventListener('input', (e) => {
-                this.searchTerm = e.target.value.toLowerCase();
-                this.currentPage = 1; // Reset to first page on search
-                this.filterData();
-            });
-        }
+        if (this.eventListenersSetup) return; // Prevent multiple bindings
+        this.eventListenersSetup = true;
 
-        // Page size selector
-        const pageSizeSelect = document.getElementById('pageSizeSelect');
-        if (pageSizeSelect) {
-            pageSizeSelect.addEventListener('change', (e) => {
+        // Search functionality attached to document using event delegation
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'channelsSearch') {
+                this.searchTerm = e.target.value.toLowerCase();
+                this.currentPage = 1;
+                this.filterData();
+            }
+        });
+
+        document.addEventListener('change', (e) => {
+            if (e.target && e.target.id === 'pageSizeSelect') {
                 this.pageSize = parseInt(e.target.value);
-                this.currentPage = 1; // Reset to first page
+                this.currentPage = 1;
                 this.updatePagination();
                 this.updateTable();
-            });
-        }
+            }
+        });
 
-        // Pagination buttons
         document.addEventListener('click', (e) => {
+            // Pagination buttons
             if (e.target.closest('.pagination-btn') && !e.target.closest('.pagination-btn').disabled) {
                 const page = parseInt(e.target.closest('.pagination-btn').getAttribute('data-page'));
                 if (page && page !== this.currentPage) {
@@ -445,22 +477,37 @@ class ChannelsTableManager {
                     this.updateTable();
                 }
             }
-        });
 
-        // Sorting functionality is now handled directly in renderTable
+            // Expand/collapse rows
+            const row = e.target.closest('.peer-group-row');
+            if (row) {
+                // If clicked on a link, don't expand
+                if (e.target.closest('.peer-link')) return;
+
+                const index = row.getAttribute('data-group-index');
+                const detailsRow = document.getElementById(`group-details-${index}`);
+                if (detailsRow) {
+                    const isExpanded = row.classList.contains('expanded');
+                    if (isExpanded) {
+                        row.classList.remove('expanded');
+                        detailsRow.style.display = 'none';
+                    } else {
+                        row.classList.add('expanded');
+                        detailsRow.style.display = 'table-row';
+                    }
+                }
+            }
+        });
     }
 
     filterData() {
         if (!this.searchTerm) {
-            this.filteredData = [...this.channelsData];
+            this.filteredData = [...this.peerGroupsData];
         } else {
-            this.filteredData = this.channelsData.filter(channel => {
+            this.filteredData = this.peerGroupsData.filter(group => {
                 const searchableText = [
-                    channel.alias_1,
-                    channel.alias_2,
-                    channel.node1_pub,
-                    channel.node2_pub,
-                    channel.channel_id
+                    group.peerAlias,
+                    group.peerPubkey
                 ].join(' ').toLowerCase();
                 
                 return searchableText.includes(this.searchTerm);
@@ -472,7 +519,6 @@ class ChannelsTableManager {
     }
 
     sortData(column) {
-        // Toggle sort direction if same column
         if (this.sortColumn === column) {
             this.sortDirection = this.sortDirection === 'asc' ? 'desc' : 'asc';
         } else {
@@ -487,17 +533,17 @@ class ChannelsTableManager {
 
             switch (column) {
                 case 'peer_alias':
-                    aVal = (a.alias_1 || a.alias_2 || '').toLowerCase();
-                    bVal = (b.alias_1 || b.alias_2 || '').toLowerCase();
+                    aVal = (a.peerAlias || '').toLowerCase();
+                    bVal = (b.peerAlias || '').toLowerCase();
                     break;
                 case 'capacity':
-                    aVal = Number(a.capacity) || 0;
-                    bVal = Number(b.capacity) || 0;
+                    aVal = Number(a.totalCapacity) || 0;
+                    bVal = Number(b.totalCapacity) || 0;
                     break;
                 case 'birth_tx':
-                    aVal = String(a.birth_tx || '');
-                    bVal = String(b.birth_tx || '');
-                    return aVal.localeCompare(bVal) * multiplier;
+                    aVal = Number(a.channels[0]?.channel_id) || 0;
+                    bVal = Number(b.channels[0]?.channel_id) || 0;
+                    break;
                 default:
                     aVal = a[column] || '';
                     bVal = b[column] || '';
@@ -516,12 +562,10 @@ class ChannelsTableManager {
     }
 
     updateSortIcons() {
-        // Reset all sort icons
         document.querySelectorAll('.data-table th.sortable i').forEach(icon => {
             icon.className = 'fas fa-sort';
         });
 
-        // Update active sort icon
         if (this.sortColumn) {
             const activeHeader = document.querySelector(`.data-table [data-sort="${this.sortColumn}"] i`);
             if (activeHeader) {
@@ -544,7 +588,6 @@ class ChannelsTableManager {
             countEl.textContent = this.filteredData.length;
         }
 
-        // Update pagination controls
         if (paginationContainer) {
             paginationContainer.outerHTML = this.generatePaginationControls();
         }
@@ -556,7 +599,6 @@ class ChannelsTableManager {
     }
 
     showError(message) {
-        console.log('ChannelsTableManager: Showing error:', message);
         const container = document.getElementById('channelsTableContainer');
         if (container) {
             container.innerHTML = `
@@ -566,8 +608,6 @@ class ChannelsTableManager {
                     <small>Check browser console for details</small>
                 </div>
             `;
-        } else {
-            console.error('ChannelsTableManager: Container not found for error state');
         }
     }
 
@@ -580,14 +620,12 @@ class ChannelsTableManager {
                     <p>Loading channel details...</p>
                 </div>
             `;
-        } else {
-            console.error('ChannelsTableManager: Container not found for loading state');
         }
     }
 
     cleanup() {
-        // Clear data
         this.channelsData = [];
+        this.peerGroupsData = [];
         this.filteredData = [];
         this.paginatedData = [];
         this.sortColumn = null;
@@ -597,7 +635,6 @@ class ChannelsTableManager {
         this.pageSize = 50;
         this.totalPages = 1;
         
-        // Clear container
         const container = document.getElementById('channelsTableContainer');
         if (container) {
             container.innerHTML = '';
