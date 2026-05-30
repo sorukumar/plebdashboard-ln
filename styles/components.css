@@ -257,7 +257,37 @@ td, th:not(.sortable),
     padding-left: 1rem !important;
 }
 
-/* Table-specific search styling (for prank.html) */
+.search-container .search-input.has-value {
+    padding-right: 4rem !important;
+}
+
+.search-clear-btn {
+    position: absolute;
+    right: 2.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: none;
+    color: var(--text-muted);
+    cursor: pointer;
+    padding: 0.2rem;
+    font-size: 0.9rem;
+    z-index: 3;
+    transition: color 0.2s;
+    display: none;
+}
+
+.search-clear-btn.visible {
+    display: block;
+}
+
+.search-clear-btn:hover {
+    color: var(--primary);
+}
+
+.hero-clear-btn {
+    right: 4.5rem;
+}
 .table-controls .search-container {
     position: relative;
     flex: 1;

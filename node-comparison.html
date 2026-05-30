@@ -50,6 +50,9 @@
                             class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off"
                             spellcheck="false">
                         <i class="fas fa-search search-icon"></i>
+                        <button type="button" class="search-clear-btn" aria-label="Clear search">
+                            <i class="fas fa-times"></i>
+                        </button>
                         <div id="node1Suggestions" class="search-suggestions"></div>
                     </div>
                     <div class="search-divider">
@@ -60,6 +63,9 @@
                             class="search-input" autocomplete="off" autocorrect="off" autocapitalize="off"
                             spellcheck="false">
                         <i class="fas fa-search search-icon"></i>
+                        <button type="button" class="search-clear-btn" aria-label="Clear search">
+                            <i class="fas fa-times"></i>
+                        </button>
                         <div id="node2Suggestions" class="search-suggestions"></div>
                     </div>
                     <div class="search-divider">
@@ -69,6 +75,9 @@
                         <input type="text" id="node3Input" placeholder="Optional 3rd node..." class="search-input"
                             autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
                         <i class="fas fa-search search-icon"></i>
+                        <button type="button" class="search-clear-btn" aria-label="Clear search">
+                            <i class="fas fa-times"></i>
+                        </button>
                         <div id="node3Suggestions" class="search-suggestions"></div>
                     </div>
                     <button id="compareBtn" class="btn btn-primary">
@@ -146,21 +155,8 @@
 
     <!-- Bitcoin Data Labs App Components -->
     <script src="https://bitcoindatalabs.org/components/app-components.js" onerror="this.onerror=null;this.src='https://sorukumar.github.io/Bitcoin-Data-Labs/components/app-components.js'"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            BitcoinLabsApp.init({
-                isApp: true,
-                appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/",
-                navLinks: [
-                    { name: 'Node Rankings', url: 'prank.html' },
-                    { name: 'Node Explorer', url: 'node-explorer.html' },
-                    { name: 'Channel Explorer', url: 'channel-explorer.html' },
-                    { name: 'Comparison', url: 'node-comparison.html' }
-                ]
-            });
-        });
-    </script>
+    <!-- App Configuration -->
+    <script src="scripts/app-config.js"></script>
 
     <!-- ECharts for radar chart -->
     <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>

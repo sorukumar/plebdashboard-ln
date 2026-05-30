@@ -44,14 +44,7 @@
 
         <!-- Profile content -->
         <div id="profileContent" class="profile-container" style="display: none;">
-            <!-- Breadcrumb Navigation -->
-            <div class="breadcrumb-container">
-                <div class="breadcrumb">
-                    <a href="index.html"><i class="fas fa-home"></i> Home</a>
-                    <span class="breadcrumb-separator">/</span>
-                    <span class="breadcrumb-current">Node Profile</span>
-                </div>
-            </div>
+
 
             <!-- Node Header -->
             <div class="profile-header">
@@ -258,21 +251,8 @@
 
     <!-- Bitcoin Data Labs App Components -->
     <script src="https://bitcoindatalabs.org/components/app-components.js" onerror="this.onerror=null;this.src='https://sorukumar.github.io/Bitcoin-Data-Labs/components/app-components.js'"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            BitcoinLabsApp.init({
-                isApp: true,
-                appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/",
-                navLinks: [
-                    { name: 'Node Rankings', url: 'prank.html' },
-                    { name: 'Node Explorer', url: 'node-explorer.html' },
-                    { name: 'Channel Explorer', url: 'channel-explorer.html' },
-                    { name: 'Comparison', url: 'node-comparison.html' }
-                ]
-            });
-        });
-    </script>
+    <!-- App Configuration -->
+    <script src="scripts/app-config.js"></script>
 
     <!-- Profile functionality -->
     <script type="module" src="scripts/profile.js"></script>

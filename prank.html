@@ -38,13 +38,18 @@
                 <input type="text" id="searchInput" placeholder="Search by node alias or pubkey..."
                     class="search-input">
                 <i class="fas fa-search search-icon"></i>
+                <button type="button" class="search-clear-btn" aria-label="Clear search">
+                    <i class="fas fa-times"></i>
+                </button>
             </div>
         </div>
 
         <div class="table-container">
-            <div id="loading" class="loading">
-                <i class="fas fa-spinner fa-spin"></i>
-                Loading node ranking data...
+            <div id="loading" class="loading-state">
+                <div class="loading-content">
+                    <i class="fas fa-spinner fa-spin"></i>
+                    <p>Loading node ranking data...</p>
+                </div>
             </div>
             <table id="dataTable" class="data-table" style="display: none;">
                 <thead id="tableHead"></thead>
@@ -73,26 +78,11 @@
 
     <!-- Bitcoin Data Labs App Components -->
     <script src="https://bitcoindatalabs.org/components/app-components.js" onerror="this.onerror=null;this.src='https://sorukumar.github.io/Bitcoin-Data-Labs/components/app-components.js'"></script>
-    <!-- Hyparquet library -->
+    <!-- App Configuration -->
+    <script src="scripts/app-config.js"></script>
+    
     <!-- Table functionality as ES module -->
     <script type="module" src="scripts/node-rank.js"></script>
-    <!-- Table functionality -->
-    <script src="scripts/node-rank.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            BitcoinLabsApp.init({
-                isApp: true,
-                appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/",
-                navLinks: [
-                    { name: 'Node Rankings', url: 'prank.html' },
-                    { name: 'Node Explorer', url: 'node-explorer.html' },
-                    { name: 'Channel Explorer', url: 'channel-explorer.html' },
-                    { name: 'Comparison', url: 'node-comparison.html' }
-                ]
-            });
-        });
-    </script>
 </body>
 
 </html>

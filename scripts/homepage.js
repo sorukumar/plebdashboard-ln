@@ -413,7 +413,7 @@ class HomepageManager {
             const nodeType = node.node_type || 'Lightning Node';
             
             return `
-                <div class="node-card">
+                <a href="profile.html?node=${encodeURIComponent(node.pub_key)}" class="node-card" style="text-decoration: none; color: inherit; display: block;">
                     <div class="featured-badge"><i class="fas fa-star"></i> Featured</div>
                     <div class="node-header">
                         <div class="node-alias">${alias}</div>
@@ -423,13 +423,7 @@ class HomepageManager {
                         </div>
                     </div>
                     <div class="node-comment">${comment}</div>
-                    <div style="margin-top: 1.5rem; display: flex; justify-content: center;">
-                        <a href="profile.html?node=${encodeURIComponent(node.pub_key)}" class="btn-action">
-                            <i class="fas fa-user"></i>
-                            View Profile
-                        </a>
-                    </div>
-                </div>
+                </a>
             `;
         }).join('');
         

@@ -31,17 +31,70 @@ class NodeExplorerManager {
     }
 
     async init() {
+        this.loadURLState();
         await this.loadNodeData();
         if (!this.isHomepage) {
             await this.loadFeaturedNodes();
         }
         this.setupEventListeners();
         if (!this.isHomepage) {
-            this.renderNodes();
+            // Apply loaded URL state filtering
+            this.applyFilters();
             this.renderFeaturedNodes();
             this.updateFilterStats(); // Initialize filter stats
             this.showContent(); // Only show content after everything is loaded
         }
+    }
+
+    loadURLState() {
+        const params = new URLSearchParams(window.location.search);
+        
+        if (params.has('q')) {
+            this.searchTerm = params.get('q');
+            const searchInput = document.getElementById('nodeExplorerSearchInput') || document.getElementById('trendingSearchInput');
+            if (searchInput) searchInput.value = this.searchTerm;
+        }
+        if (params.has('sort')) {
+            this.currentSort = params.get('sort');
+            const sortSelect = document.getElementById('sortBy');
+            if (sortSelect) sortSelect.value = this.currentSort;
+        }
+        if (params.has('view')) {
+            this.currentView = params.get('view');
+        }
+        if (params.has('page')) {
+            this.currentPage = parseInt(params.get('page')) || 1;
+        }
+        
+        Object.keys(this.filterRanges).forEach(metric => {
+            if (params.has(`${metric}_min`)) {
+                this.filterRanges[metric].min = Number(params.get(`${metric}_min`));
+            }
+            if (params.has(`${metric}_max`)) {
+                this.filterRanges[metric].max = Number(params.get(`${metric}_max`));
+            }
+        });
+        
+        // UI will be updated by updateFilterUI later
+    }
+
+    syncURLState() {
+        if (this.isHomepage) return;
+        
+        const params = new URLSearchParams();
+        
+        if (this.searchTerm) params.set('q', this.searchTerm);
+        if (this.currentSort && this.currentSort !== 'pleb_rank') params.set('sort', this.currentSort);
+        if (this.currentView && this.currentView !== 'grid') params.set('view', this.currentView);
+        if (this.currentPage && this.currentPage !== 1) params.set('page', this.currentPage);
+        
+        Object.keys(this.filterRanges).forEach(metric => {
+            if (this.filterRanges[metric].min !== null) params.set(`${metric}_min`, this.filterRanges[metric].min);
+            if (this.filterRanges[metric].max !== null) params.set(`${metric}_max`, this.filterRanges[metric].max);
+        });
+        
+        const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+        window.history.replaceState({}, '', newUrl);
     }
 
     async loadNodeData() {
@@ -124,6 +177,7 @@ class NodeExplorerManager {
                 this.currentSort = e.target.value;
                 this.sortNodes();
                 this.renderNodes();
+                this.syncURLState();
             });
         }
 
@@ -292,11 +346,15 @@ class NodeExplorerManager {
             return true;
         });
 
-        this.currentPage = 1;
+        if (this.currentPage > Math.ceil(this.filteredNodes.length / this.itemsPerPage)) {
+            this.currentPage = 1;
+        }
+
         this.sortNodes();
         this.renderNodes();
         this.updatePagination();
         this.updateFilterStats();
+        this.syncURLState();
     }
 
     passesRangeFilters(node) {
@@ -429,6 +487,7 @@ class NodeExplorerManager {
         this.updatePagination();
         this.updateFilterStats();
         this.updateActiveFilterCount();
+        this.syncURLState();
     }
 
     toggleView(view) {
@@ -448,6 +507,7 @@ class NodeExplorerManager {
         }
 
         this.renderNodes();
+        this.syncURLState();
     }
 
     renderFeaturedNodes() {
@@ -631,6 +691,7 @@ class NodeExplorerManager {
                 this.currentPage = i;
                 this.renderNodes();
                 this.updatePagination();
+                this.syncURLState();
             });
             pageNumbers.appendChild(pageLink);
         }

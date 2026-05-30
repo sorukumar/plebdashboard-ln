@@ -235,9 +235,26 @@ class NodeComparisonManager {
             const nodeIds = nodesParam.split(',').map(id => id.trim()).filter(id => id);
             if (nodeIds.length >= 2 && nodeIds.length <= 3) {
                 this.selectedNodes = nodeIds;
+                
+                // Populate inputs
+                const inputIds = ['node1Input', 'node2Input', 'node3Input'];
+                nodeIds.forEach((id, index) => {
+                    const input = document.getElementById(inputIds[index]);
+                    if (input) input.value = id;
+                });
+                
                 this.loadDataAndRender();
             }
         }
+    }
+
+    syncURLState() {
+        const params = new URLSearchParams();
+        if (this.selectedNodes && this.selectedNodes.length > 0) {
+            params.set('nodes', this.selectedNodes.join(','));
+        }
+        const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+        window.history.replaceState({}, '', newUrl);
     }
 
     async handleCompare() {
@@ -259,6 +276,7 @@ class NodeComparisonManager {
         }
 
         this.selectedNodes = nodeIds;
+        this.syncURLState();
         this.loadDataAndRender();
     }
 

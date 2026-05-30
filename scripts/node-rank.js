@@ -82,14 +82,46 @@ class DataTableManager {
         this.sortColumn = null;
         this.sortDirection = 'asc';
         
+        this.searchTerm = '';
         if (window.location.protocol === 'file:') {
             this.showError('Please use Live Server extension or local web server.');
             return;
         }
         
         this.initializeEventListeners();
+        this.loadURLState();
         this.loadData();
     }
+
+    loadURLState() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('q')) {
+            this.searchTerm = params.get('q');
+            const searchInput = document.getElementById('searchInput');
+            if (searchInput) searchInput.value = this.searchTerm;
+        }
+        if (params.has('sort')) {
+            this.sortColumn = params.get('sort');
+        }
+        if (params.has('dir')) {
+            this.sortDirection = params.get('dir');
+        }
+        if (params.has('page')) {
+            this.currentPage = parseInt(params.get('page')) || 1;
+        }
+    }
+
+    syncURLState() {
+        const params = new URLSearchParams();
+        if (this.searchTerm) params.set('q', this.searchTerm);
+        if (this.sortColumn) params.set('sort', this.sortColumn);
+        if (this.sortDirection && this.sortDirection !== 'asc') params.set('dir', this.sortDirection);
+        if (this.currentPage && this.currentPage !== 1) params.set('page', this.currentPage);
+        
+        const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+        window.history.replaceState({}, '', newUrl);
+    }
+    
     initializeEventListeners() {
         const searchInput = document.getElementById('searchInput');
         if (searchInput) {
@@ -142,7 +174,16 @@ class DataTableManager {
                     }
                     
                     this.filteredData = [...this.data];
+                    // Apply loaded URL state filtering
+                    if (this.searchTerm) {
+                        this.filterData(this.searchTerm, false); // false to avoid redundant render/sync
+                    }
+                    if (this.sortColumn) {
+                        this.sortData(this.sortColumn, false); // false to avoid redundant render/sync
+                    }
+                    
                     this.renderTable();
+                    if (this.sortColumn) this.updateSortIndicators(this.sortColumn);
                     this.hideLoading();
                 },
                 onError: (error) => this.showError('Error parsing parquet file: ' + error.message)
@@ -159,7 +200,8 @@ class DataTableManager {
         }
     }
     
-    filterData(searchTerm) {
+    filterData(searchTerm, shouldSync = true) {
+        this.searchTerm = searchTerm;
         if (!searchTerm) {
             this.filteredData = [...this.data];
         } else {
@@ -172,10 +214,13 @@ class DataTableManager {
             );
         }
         this.currentPage = 1;
-        this.renderTable();
+        if (shouldSync) {
+            this.renderTable();
+            this.syncURLState();
+        }
     }
     
-    sortData(column) {
+    sortData(column, shouldSync = true) {
         // Skip sorting for non-sortable columns
         const nonSortableColumns = ['alias', 'pub_key'];
         if (nonSortableColumns.includes(column)) return;
@@ -228,8 +273,11 @@ class DataTableManager {
         });
 
         this.currentPage = 1;
-        this.renderTable();
-        this.updateSortIndicators(column);
+        if (shouldSync) {
+            this.renderTable();
+            this.updateSortIndicators(column);
+            this.syncURLState();
+        }
     }
     
     updateSortIndicators(column) {
@@ -483,6 +531,7 @@ class DataTableManager {
                 e.preventDefault();
                 this.currentPage = i;
                 this.renderTable();
+                this.syncURLState();
             });
             pageNumbers.appendChild(pageLink);
         }

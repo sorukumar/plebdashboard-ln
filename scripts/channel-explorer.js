@@ -65,7 +65,44 @@ class ChannelExplorerManager {
         }
         
         this.initializeEventListeners();
+        this.loadURLState();
         this.loadChannelData();
+    }
+
+    loadURLState() {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('node1')) {
+            const node1SearchInput = document.getElementById('node1SearchInput');
+            if (node1SearchInput) node1SearchInput.value = params.get('node1');
+        }
+        if (params.has('node2')) {
+            const node2SearchInput = document.getElementById('node2SearchInput');
+            if (node2SearchInput) node2SearchInput.value = params.get('node2');
+        }
+        if (params.has('sort')) {
+            this.sortColumn = params.get('sort');
+        }
+        if (params.has('dir')) {
+            this.sortDirection = params.get('dir');
+        }
+        if (params.has('page')) {
+            this.currentPage = parseInt(params.get('page')) || 1;
+        }
+    }
+
+    syncURLState() {
+        const params = new URLSearchParams();
+        const node1SearchInput = document.getElementById('node1SearchInput');
+        const node2SearchInput = document.getElementById('node2SearchInput');
+        
+        if (node1SearchInput && node1SearchInput.value.trim()) params.set('node1', node1SearchInput.value.trim());
+        if (node2SearchInput && node2SearchInput.value.trim()) params.set('node2', node2SearchInput.value.trim());
+        if (this.sortColumn) params.set('sort', this.sortColumn);
+        if (this.sortDirection && this.sortDirection !== 'asc') params.set('dir', this.sortDirection);
+        if (this.currentPage && this.currentPage !== 1) params.set('page', this.currentPage);
+        
+        const newUrl = `${window.location.pathname}${params.toString() ? '?' + params.toString() : ''}`;
+        window.history.replaceState({}, '', newUrl);
     }
 
     initializeEventListeners() {
@@ -140,7 +177,19 @@ class ChannelExplorerManager {
                         });
                         
                         this.filteredChannels = [...this.allChannels];
+                        
+                        // Apply loaded URL state filtering
+                        const node1SearchInput = document.getElementById('node1SearchInput');
+                        const node2SearchInput = document.getElementById('node2SearchInput');
+                        if ((node1SearchInput && node1SearchInput.value) || (node2SearchInput && node2SearchInput.value)) {
+                            this.filterData(false);
+                        }
+                        if (this.sortColumn) {
+                            this.sortData(this.sortColumn, false);
+                        }
+                        
                         this.renderTable();
+                        if (this.sortColumn) this.updateSortIndicators(this.sortColumn);
                         this.hideLoading();
                     }
                 },
@@ -261,7 +310,7 @@ class ChannelExplorerManager {
         return `Node 1: ${node1Status} | Node 2: ${node2Status}`;
     }
 
-    filterData() {
+    filterData(shouldSync = true) {
         const node1SearchInput = document.getElementById('node1SearchInput');
         const node2SearchInput = document.getElementById('node2SearchInput');
         const node1SearchTerm = node1SearchInput ? node1SearchInput.value.trim().toLowerCase() : '';
@@ -293,7 +342,10 @@ class ChannelExplorerManager {
         this.filteredChannels = filtered;
 
         this.currentPage = 1;
-        this.renderTable();
+        if (shouldSync) {
+            this.renderTable();
+            this.syncURLState();
+        }
     }
 
     resetFilters() {
@@ -306,9 +358,10 @@ class ChannelExplorerManager {
         this.sortColumn = null;
         this.sortDirection = 'asc';
         this.renderTable();
+        this.syncURLState();
     }
 
-    sortData(column) {
+    sortData(column, shouldSync = true) {
         // Skip sorting for non-sortable columns
         const nonSortableColumns = ['peer', 'node1_fees', 'node2_fees'];
         if (nonSortableColumns.includes(column)) return;
@@ -363,8 +416,11 @@ class ChannelExplorerManager {
         });
 
         this.currentPage = 1;
-        this.renderTable();
-        this.updateSortIndicators(column);
+        if (shouldSync) {
+            this.renderTable();
+            this.updateSortIndicators(column);
+            this.syncURLState();
+        }
     }
     
     updateSortIndicators(column) {
@@ -574,6 +630,7 @@ class ChannelExplorerManager {
                 e.preventDefault();
                 this.currentPage = i;
                 this.renderTable();
+                this.syncURLState();
             });
             pageNumbers.appendChild(pageLink);
         }

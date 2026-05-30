@@ -34,6 +34,9 @@
                     <button id="searchButton" class="search-button">
                         <i class="fas fa-search"></i>
                     </button>
+                    <button type="button" class="search-clear-btn hero-clear-btn" aria-label="Clear search" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
                     <div id="searchSuggestions" class="search-suggestions"></div>
                 </div>
             </div>
@@ -118,15 +121,8 @@
 
     <!-- Bitcoin Data Labs App Components -->
     <script src="https://bitcoindatalabs.org/components/app-components.js" onerror="this.onerror=null;this.src='https://sorukumar.github.io/Bitcoin-Data-Labs/components/app-components.js'"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            BitcoinLabsApp.init({
-                isApp: true,
-                appName: "plebdashboard-ln",
-                appHomeUrl: "https://sorukumar.github.io/plebdashboard-ln/"
-            });
-        });
-    </script>
+    <!-- App Configuration -->
+    <script src="scripts/app-config.js"></script>
 
     <!-- Homepage functionality -->
     <script type="module" src="scripts/homepage.js"></script>

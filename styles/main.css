@@ -26,8 +26,6 @@
     /* Header background inherits brand-standard gradient from BDL */
     --bdl-subnav-bg: var(--bg-primary);
     /* Sub-nav matches page background */
-    --bdl-nav-active-bg: var(--primary);
-    --bdl-nav-active-text: #FFFFFF;
 }
 
 /* Cleaner App Logo (No underlines) */
