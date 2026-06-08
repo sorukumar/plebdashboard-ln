@@ -1,23 +1,14 @@
 :root {
-    --primary: #E8916B;
     --primary-dark: #d67e54;
-    --secondary: #2A3342;
     --accent-cool: #8BBEDC;
     --accent-warm: #F4C2A1;
-    --bg-primary: #FDFBF9;
-    --bg-secondary: #F5F1EE;
     --bg-tertiary: #f8f9fa;
-    --text-primary: #2A3342;
-    --text-secondary: #5F6C7E;
     --text-muted: #999;
-    --surface: #FFFFFF;
-    --border: #E5E1DC;
     --border-color: #E5E1DC;
     --accent-color: #E8916B;
     --error-color: #dc3545;
     --success-color: #28a745;
-    --bitcoin-orange: #f7931a;
-
+    --bitcoin-orange: #E8916B;
     /* Container widths */
     --container-width: 90%;
     --max-content-width: 1200px;

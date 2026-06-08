@@ -646,7 +646,7 @@ td, th:not(.sortable),
 }
 
 .breadcrumb a:hover {
-    color: var(--bitcoin-orange, #f7931a);
+    color: var(--bitcoin-orange, #E8916B);
     background: var(--bg-secondary);
     text-decoration: underline;
 }
